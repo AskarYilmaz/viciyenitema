@@ -18475,15 +18475,20 @@ function phone_number_format(formatphone) {
 	// functions to hide and show different DIVs
 	function showDiv(divvar) 
 		{
+		
+
 		if (document.getElementById(divvar))
 			{
 			divref = document.getElementById(divvar).style;
 			divref.visibility = 'visible';
 			}
+			
 		}
 	function hideDiv(divvar)
 		{
-		if (document.getElementById(divvar))
+		
+
+				if (document.getElementById(divvar))
 			{
 			divref = document.getElementById(divvar).style;
 			divref.visibility = 'hidden';
@@ -18491,7 +18496,9 @@ function phone_number_format(formatphone) {
 				{
 				document.getElementById('InternalChatIFrame').src='./agc_agent_manager_chat_interface.php?user='+user+'&pass='+orig_pass;
 				}
-			}
+			}	
+			
+	
 		}
 	function clearDiv(divvar)
 		{
@@ -18944,10 +18951,27 @@ function phone_number_format(formatphone) {
 			document.getElementById("gender_list").selectedIndex = gIndex;
 			}
 		}
+       function showSessionModal(idi) {
+            const modal = document.getElementById(idi);
+            modal.classList.remove('hidden');
+            
+            // Body scroll'unu engelle
+            document.body.style.overflow = 'hidden';
+            
+            // Countdown başlat
+            startCountdown();
+            
+            // Escape tuşuyla kapatma
+            document.addEventListener('keydown', handleEscapeKey);
+            
+            // Focus trap (accessibility)
+            trapFocus(modal);
+        }
 
+ 
 	</script>
 
-
+/* Css kodları */
 <style type="text/css">
 <!--
 	div.scroll_calllog {height: <?php echo $CQheight ?>px; width: <?php echo $MNwidth ?>px; overflow: scroll;}
@@ -18956,6 +18980,471 @@ function phone_number_format(formatphone) {
 	div.scroll_script {height: <?php echo $SSheight ?>px; width: <?php echo $SDwidth ?>px; background: transparent; overflow: auto; font-size: 12px;  font-family: sans-serif;}
 	div.noscroll_script {height: <?php echo $SSheight ?>px; width: <?php echo $SDwidth ?>px; background: #FFF5EC; overflow: hidden; font-size: 12px;  font-family: sans-serif;}
 -->
+
+            :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+            --light-color: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--light-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* =========================
+           MERKEZI SPAN SİSTEMİ
+           ========================= */
+
+        /* Ana center container - tüm center spanlar için */
+        .vici-center-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            max-width: 90vw;
+            max-height: 90vh;
+            animation: viciSlideIn 0.4s ease-out;
+        }
+
+        @keyframes viciSlideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) translateY(0) scale(1);
+            }
+        }
+
+        /* Temel card yapısı - tüm center spanlar için */
+        .vici-center-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            min-width: 400px;
+            max-width: 600px;
+        }
+
+        /* Card header */
+        .vici-center-header {
+            background: var(--gradient-bg);
+            padding: 2rem;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .vici-center-header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+            opacity: 0.1;
+        }
+
+        .vici-center-icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .vici-center-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .vici-center-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .vici-center-subtitle {
+            opacity: 0.9;
+            font-size: 0.95rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Card body */
+        .vici-center-body {
+            padding: 2rem;
+        }
+
+        .vici-center-message {
+            font-size: 1rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        /* Card actions */
+        .vici-center-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        /* Button styles */
+        .vici-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            min-width: 120px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .vici-btn-primary {
+            background: var(--gradient-bg);
+            color: white;
+        }
+
+        .vici-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        .vici-btn-success {
+            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+            color: white;
+        }
+
+        .vici-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+            color: white;
+        }
+
+        .vici-btn-danger {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .vici-btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+            color: white;
+        }
+
+        .vici-btn-secondary {
+            background: linear-gradient(135deg, var(--text-secondary) 0%, #475569 100%);
+            color: white;
+        }
+
+        .vici-btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(71, 85, 105, 0.3);
+            color: white;
+        }
+
+        .vici-btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .vici-btn-outline:hover {
+            background: var(--light-color);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Close button */
+        .vici-center-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            z-index: 2;
+        }
+
+        .vici-center-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        /* =========================
+           RENK VARYANTLARı
+           ========================= */
+
+        /* Error/Warning variant */
+        .vici-center-error .vici-center-header {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .vici-center-error .vici-center-icon {
+            animation: viciPulseError 2s infinite;
+        }
+
+        @keyframes viciPulseError {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Success variant */
+        .vici-center-success .vici-center-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        /* Warning variant */
+        .vici-center-warning .vici-center-header {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        /* Info variant */
+        .vici-center-info .vici-center-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        /* =========================
+           BOYUT VARYANTLARı
+           ========================= */
+
+        /* Small variant */
+        .vici-center-small {
+            min-width: 300px;
+            max-width: 450px;
+        }
+
+        .vici-center-small .vici-center-header {
+            padding: 1.5rem;
+        }
+
+        .vici-center-small .vici-center-body {
+            padding: 1.5rem;
+        }
+
+        .vici-center-small .vici-center-icon {
+            width: 50px;
+            height: 50px;
+        }
+
+        .vici-center-small .vici-center-icon i {
+            font-size: 1.5rem;
+        }
+
+        .vici-center-small .vici-center-title {
+            font-size: 1.2rem;
+        }
+
+        /* Large variant */
+        .vici-center-large {
+            min-width: 500px;
+            max-width: 700px;
+        }
+
+        .vici-center-large .vici-center-header {
+            padding: 2.5rem;
+        }
+
+        .vici-center-large .vici-center-body {
+            padding: 2.5rem;
+        }
+
+        .vici-center-large .vici-center-icon {
+            width: 90px;
+            height: 90px;
+        }
+
+        .vici-center-large .vici-center-icon i {
+            font-size: 2.5rem;
+        }
+
+        .vici-center-large .vici-center-title {
+            font-size: 1.8rem;
+        }
+
+        /* =========================
+           RESPONSİVE TASARIM
+           ========================= */
+
+        @media (max-width: 768px) {
+            .vici-center-container {
+                max-width: 95vw;
+                max-height: 95vh;
+            }
+            
+            .vici-center-card {
+                min-width: 280px;
+                border-radius: 15px;
+            }
+            
+            .vici-center-header,
+            .vici-center-body {
+                padding: 1.5rem;
+            }
+            
+            .vici-center-actions {
+                flex-direction: column;
+            }
+            
+            .vici-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .vici-center-header,
+            .vici-center-body {
+                padding: 1rem;
+            }
+            
+            .vici-center-title {
+                font-size: 1.2rem;
+            }
+            
+            .vici-center-subtitle {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* =========================
+           UTIL CLASSES
+           ========================= */
+
+        .vici-hidden {
+            display: none !important;
+        }
+
+        .vici-text-center {
+            text-align: center !important;
+        }
+
+        .vici-text-left {
+            text-align: left !important;
+        }
+
+        .vici-mb-1 { margin-bottom: 0.5rem !important; }
+        .vici-mb-2 { margin-bottom: 1rem !important; }
+        .vici-mb-3 { margin-bottom: 1.5rem !important; }
+
+        .vici-mt-1 { margin-top: 0.5rem !important; }
+        .vici-mt-2 { margin-top: 1rem !important; }
+        .vici-mt-3 { margin-top: 1.5rem !important; }
+
+        /* =========================
+           DEMO STYLES
+           ========================= */
+
+        .demo-page {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            background: var(--gradient-bg);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .demo-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .demo-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .demo-btn {
+            padding: 1rem;
+            background: var(--light-color);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .demo-btn:hover {
+            border-color: var(--primary-color);
+            background: white;
+        }
+
+        .demo-code {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .demo-code code {
+            color: #d63384;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+
+
+
 </style>
 </head>
 <?php
@@ -19915,14 +20404,209 @@ if ($agent_display_dialable_leads > 0)
     </tr></table>
 </span>
 
-<span style="position:absolute;left:0px;top:12px;z-index:<?php $zi++; echo $zi ?>;" id="NoneInSessionBox">
-    <table border="0" bgcolor="#CCFFFF" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center"> <font class="sd_text"><?php echo _QXZ("No one is in your session:"); ?> <span id="NoneInSessionID"></span><br />
-	<a href="#" onclick="NoneInSessionOK();return false;"><?php echo _QXZ("Go Back"); ?></a>
-    <br /><br />
-	<span id="NoneInSessionLink"><a href="#" onclick="NoneInSessionCalL();return false;"><?php echo _QXZ("Call Agent Again"); ?></a></font></span>
-    </td></tr></table>
-</span>
+  <!-- Session Modal - Hidden by default -->
+    <!-- NoneInSessionBox Span - VICIdial login tarzında -->
+    <span id="NoneInSessionBox" style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 99999;
+        max-width: 500px;
+        width: 90%;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        display: none;
+    ">
+        <div style="
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+        ">
+            <!-- Header -->
+            <div style="
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                padding: 2rem;
+                text-align: center;
+                color: white;
+                position: relative;
+            ">
+                <!-- Close Button -->
+                <button onclick="hideDiv('NoneInSessionBox')" style="
+                    position: absolute;
+                    top: 1rem;
+                    right: 1rem;
+                    background: rgba(255, 255, 255, 0.2);
+                    border: none;
+                    border-radius: 50%;
+                    width: 35px;
+                    height: 35px;
+                    color: white;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.transform='rotate(90deg)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.transform='rotate(0deg)'">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <!-- Icon -->
+                <div style="
+                    width: 70px;
+                    height: 70px;
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto 1rem;
+                    animation: pulse 2s infinite;
+                ">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: white;"></i>
+                </div>
+                
+                <!-- Title -->
+                <h3 style="
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    margin-bottom: 0.5rem;
+                    margin-top: 0;
+                ">Session Hatası</h3>
+                
+                <!-- Subtitle -->
+                <p style="
+                    opacity: 0.9;
+                    font-size: 0.95rem;
+                    margin: 0;
+                ">Oturum geçersiz durumda</p>
+            </div>
+            
+            <!-- Body -->
+            <div style="padding: 2rem;">
+                <!-- Message -->
+                <p style="
+                    font-size: 1rem;
+                    color: #1e293b;
+                    line-height: 1.6;
+                    margin-bottom: 1.5rem;
+                    text-align: center;
+                ">
+                    <strong style="color: #ef4444;">Uyarı:</strong> Mevcut oturumunuz geçersiz durumda. 
+                    Bu durum güvenlik nedenleriyle veya sistem güncellemesi sebebiyle oluşmuş olabilir.
+                </p>
+                
+                <!-- Details Box -->
+                <div style="
+                    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+                    border: 1px solid #fecaca;
+                    border-radius: 12px;
+                    padding: 1.5rem;
+                    margin-bottom: 2rem;
+                ">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <i class="fas fa-user" style="color: #ef4444; width: 20px; text-align: center;"></i>
+                        <span style="font-weight: 600; color: #1e293b; min-width: 100px;">Kullanıcı:</span>
+                        <span style="color: #64748b;">agent_001</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                        <i class="fas fa-clock" style="color: #ef4444; width: 20px; text-align: center;"></i>
+                        <span style="font-weight: 600; color: #1e293b; min-width: 100px;">Son Aktivite:</span>
+                        <span style="color: #64748b;">2 dakika önce</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem;">
+                        <i class="fas fa-shield-alt" style="color: #ef4444; width: 20px; text-align: center;"></i>
+                        <span style="font-weight: 600; color: #1e293b; min-width: 100px;">Session ID:</span>
+                        <span style="color: #64748b;">VIC_20241208_15:30</span>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div style="
+                    display: flex;
+                    gap: 1rem;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                ">
+                    <button onclick="redirectToLogin()" style="
+                        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                        color: white;
+                        border: none;
+                        padding: 0.75rem 1.5rem;
+                        border-radius: 10px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        min-width: 140px;
+                        transition: all 0.3s ease;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.5rem;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(239, 68, 68, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Tekrar Giriş
+                    </button>
+                    
+                    <button onclick="refreshSession()" style="
+                        background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+                        color: white;
+                        border: none;
+                        padding: 0.75rem 1.5rem;
+                        border-radius: 10px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        min-width: 140px;
+                        transition: all 0.3s ease;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.5rem;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(71, 85, 105, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                        <i class="fas fa-sync-alt"></i>
+                        Session Yenile
+                    </button>
+                </div>
+            </div>
+        </div>
+    </span>
 
+    <style>
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) translateY(0) scale(1);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        #NoneInSessionBox {
+            animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        @media (max-width: 768px) {
+            #NoneInSessionBox {
+                width: 95% !important;
+                max-width: 95% !important;
+            }
+        }
+    </style>
+
+ 
 <span style="position:absolute;left:0px;top:30px;z-index:<?php $zi++; echo $zi ?>;" id="CustomerGoneBox">
     <table border="0" bgcolor="#CCFFFF" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center"> <font class="sd_text"><?php echo _QXZ("Customer has hung up:"); ?> <span id="CustomerGoneChanneL"></span><br />
 	<a href="#" onclick="CustomerGoneOK();return false;"><?php echo _QXZ("Go Back"); ?></a>
