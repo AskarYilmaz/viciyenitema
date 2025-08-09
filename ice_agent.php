@@ -1501,301 +1501,584 @@ else
 			$row=mysqli_fetch_row($rslt);
 // Bu kısımdan itibaren authentication sonrası işlemlere devam ediliyor
 			// Burada VDloginDISPLAY=1 durumu için modern login formu gösterilecek
-			}
-		}
+			<?php
+// Bu kodu ice_agent.php dosyanızda şu satırdan sonra ekleyin:
+// $row=mysqli_fetch_row($rslt);
+// // Bu kısımdan itibaren authentication sonrası işlemlere devam ediliyor
 
-	// Modern Final Login Form (User Login Required)
-	if ($VDloginDISPLAY==1)
-		{
-		echo "<title>"._QXZ("Agent web client: User Login")."</title>\n";
-		echo "</head>\n";
-		echo "<body>\n";
-		
-		echo '<div class="login-container">
-			<div class="login-card">
-				<div class="login-header">
-					<div class="logo-container">
-						<i class="fas fa-user-circle"></i>
+			// KULLANICI BİLGİLERİNİ TAMAMLAYALIM
+			$VU_full_name =					$row[0];
+			$VU_user_level =				$row[1];
+			$VU_hotkeys_active =			$row[2];
+			$VU_agent_choose_ingroups =		$row[3];
+			$VU_scheduled_callbacks =		$row[4];
+			$VU_agentonly_callbacks =		$row[5];
+			$VU_agentcall_manual =			$row[6];
+			$VU_vicidial_recording =		$row[7];
+			$VU_vicidial_transfers =		$row[8];
+			$VU_closer_default_blended =	$row[9];
+			$VU_user_group =				$row[10];
+			$VU_vicidial_recording_override = $row[11];
+			$VU_alter_custphone_override =	$row[12];
+			$VU_alert_enabled =				$row[13];
+			$VU_agent_shift_enforcement_override = $row[14];
+			$VU_shift_override_flag =		$row[15];
+			$VU_allow_alerts =				$row[16];
+			$VU_closer_campaigns =			$row[17];
+			$VU_agent_choose_territories =	$row[18];
+			$VU_custom_one =				$row[19];
+			$VU_custom_two =				$row[20];
+			$VU_custom_three =				$row[21];
+			$VU_custom_four =				$row[22];
+			$VU_custom_five =				$row[23];
+			$VU_agent_call_log_view_override = $row[24];
+			$VU_agent_choose_blended =		$row[25];
+			$VU_agent_lead_search_override = $row[26];
+			$VU_preset_contact_search =		$row[27];
+			$VU_max_inbound_calls =			$row[28];
+			$VU_wrapup_seconds_override =	$row[29];
+			$VU_email =						$row[30];
+			$VU_user_choose_language =		$row[31];
+			$VU_ready_max_logout =			$row[32];
+
+			if ($VU_user_choose_language == 'Y')
+				{
+				if (strlen($VD_language) > 0)
+					{
+					$VUselected_language = $VD_language;
+					}
+				}
+
+			if ( ($VU_user_level < 1) or ($VU_user_level > 9) )
+				{
+				$VDloginDISPLAY=1;
+				echo "<!-- invalid user level: $VU_user_level -->\n";
+				}
+			else
+				{
+				$VDloginDISPLAY=0;
+
+				### GET LANGUAGE TEXT ###
+				if (strlen($VUselected_language) > 0)
+					{
+					if (file_exists("lang/languages.php"))
+						{
+						require_once("lang/languages.php");
+						}
+					}
+
+				##### BEGIN AGENT SESSION SETUP #####
+				
+				### Phone and session setup ###
+				if(strlen($phone_login) > 0)
+					{
+					$phone_login = preg_replace("/\'|\"|\\\\|;/","",$phone_login);
+					$phone_pass = preg_replace("/\'|\"|\\\\|;/","",$phone_pass);
+					}
+
+				$session_name = "$VD_login$random";
+				$web_vars='';
+				$conf_exten = '';
+				$extension = '';
+				$voicemail_dump_exten = '85026666666666';
+				
+				### Server and timing variables ###
+				$server_ip = $_SERVER['SERVER_ADDR'];
+				if (strlen($server_ip) < 1)
+					{$server_ip = '127.0.0.1';}
+				
+				### Set campaign variables ###
+				$stmt = "SELECT closer_campaigns,campaign_cid,campaign_vdad_exten,campaign_rec_exten,campaign_recording,campaign_rec_filename,campaign_script,get_call_launch,xferconf_a_dtmf,xferconf_a_number,xferconf_b_dtmf,xferconf_b_number,default_xfer_group,voicemail_ext,agent_pause_codes_active,manual_dial_prefix,campaign_login_date,web_form_address,web_form_address_two,agent_lead_search,external_igb_set_user,web_form_target,vtiger_screen_login,campaign_allow_inbound,manual_dial_search_filter,default_ingroup_cid,web_form_address_three,timer_action,timer_action_message,timer_action_seconds,start_call_url,dispo_call_url,xferconf_c_number,xferconf_d_number,xferconf_e_number,use_custom_cid,scheduled_callbacks_alert,scheduled_callbacks_count,callmenu_qualify_enabled,campaign_script_two,browser_alert_sound,browser_alert_volume,user_group_two,user_group_three,xferconf_f_number,xferconf_g_number,xferconf_h_number,xferconf_i_number,xferconf_j_number from vicidial_campaigns where campaign_id='$VD_campaign'";
+				$rslt=mysql_to_mysqli($stmt, $link);
+					if ($mel > 0) {mysql_error_logging($NOW_TIME,$link,$mel,$stmt,'01011',$VD_login,$server_ip,$session_name,$one_mysql_log);}
+				$row=mysqli_fetch_row($rslt);
+				
+				$campaign_cid =							$row[1];
+				$campaign_vdad_exten =					$row[2];
+				$campaign_rec_exten =					$row[3];
+				$campaign_recording =					$row[4];
+				$campaign_rec_filename =				$row[5];
+				$campaign_script =						$row[6];
+				$get_call_launch =						$row[7];
+				$xferconf_a_dtmf =						$row[8];
+				$xferconf_a_number =					$row[9];
+				$xferconf_b_dtmf =						$row[10];
+				$xferconf_b_number =					$row[11];
+				$default_xfer_group =					$row[12];
+				$voicemail_ext =						$row[13];
+				$agent_pause_codes_active =				$row[14];
+				$manual_dial_prefix =					$row[15];
+				$campaign_login_date =					$row[16];
+				$web_form_address =						$row[17];
+				$web_form_address_two =					$row[18];
+				$agent_lead_search =					$row[19];
+				$external_igb_set_user =				$row[20];
+				$web_form_target =						$row[21];
+				$vtiger_screen_login =					$row[22];
+				$campaign_allow_inbound =				$row[23];
+				$manual_dial_search_filter =			$row[24];
+				$default_ingroup_cid =					$row[25];
+				$web_form_address_three =				$row[26];
+				$timer_action =							$row[27];
+				$timer_action_message =					$row[28];
+				$timer_action_seconds =					$row[29];
+				$start_call_url =						$row[30];
+				$dispo_call_url =						$row[31];
+				$xferconf_c_number =					$row[32];
+				$xferconf_d_number =					$row[33];
+				$xferconf_e_number =					$row[34];
+				$use_custom_cid =						$row[35];
+				$scheduled_callbacks_alert =			$row[36];
+				$scheduled_callbacks_count =			$row[37];
+				$callmenu_qualify_enabled =				$row[38];
+				$campaign_script_two =					$row[39];
+				$browser_alert_sound =					$row[40];
+				$browser_alert_volume =					$row[41];
+				$user_group_two =						$row[42];
+				$user_group_three =						$row[43];
+				$xferconf_f_number =					$row[44];
+				$xferconf_g_number =					$row[45];
+				$xferconf_h_number =					$row[46];
+				$xferconf_i_number =					$row[47];
+				$xferconf_j_number =					$row[48];
+
+				##### AUTHENTICATION COMPLETE - START MAIN INTERFACE #####
+				
+				echo "<title>"._QXZ("Agent web client")."</title>\n";
+				
+				### INSERT HEAD SCRIPTS ###
+				echo $INSERT_head_script;
+				
+				echo "
+				<script language=\"Javascript\">
+				
+				// VICIdial Agent Variables
+				var active = 'N';
+				var fronter = 0;
+				var VD_live_customer_call = 0;
+				var CalL_ScripT_id = '';
+				var CalL_ScripT_color = '';
+				var VDCL_group_id = '';
+				var campaign = '$VD_campaign';
+				var phone_login = '$phone_login';
+				var phone_pass = '$phone_pass';
+				var original_phone_login = '$phone_login';
+				var conf_exten = '$conf_exten';
+				var user = '$VD_login';
+				var pass = '$VD_pass';
+				var full_name = '$VU_full_name';
+				var hotkeys_active = '$VU_hotkeys_active';
+				var voicemail_dump_exten = '$voicemail_dump_exten';
+				var ext_context = '$ext_context';
+				var web_vars = '$web_vars';
+				var session_id = '$session_name';
+				var agcDIR = '$agcDIR';
+				var agentchannel = '';
+				var lastcustchannel = '';
+				var lastcustserverip = '';
+				var recording_filename = '';
+				var recording_id = '';
+				var customer_sec = 0;
+				var agent_log_id = '';
+				var MDnextCID = '';
+				var LaSTCID = '';
+				var phone_ip = '';
+				var original_phone_ip = '';
+				var phone_type = 'SIP';
+				var webphone_location = '$webphone_location';
+				var agentwebsite = '';
+				
+				$INSERT_head_js
+				
+				// Modern Agent Interface Functions
+				function agent_main_login_screen() {
+					// Initialize modern agent interface
+					console.log('Agent interface initializing...');
+					setTimeout(() => {
+						document.getElementById('initial-loading').style.display = 'none';
+						document.getElementById('main-interface').style.display = 'block';
+					}, 3000);
+				}
+				
+				function fast_logout() {
+					// Logout functionality
+					console.log('Logging out...');
+				}
+				
+				function browser_dimensions() {
+					// Handle browser resize
+				}
+				
+				</script>
+				";
+				
+				echo "</head>\n";
+				
+				### MAIN BODY STARTS ###
+				echo "<body onload=\"agent_main_login_screen();\" onunload=\"fast_logout();\" onresize=\"browser_dimensions();\">\n";
+				
+				// Modern loading screen
+				echo '<div id="initial-loading" class="login-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: var(--gradient-bg);">
+					<div class="login-card" style="max-width: 400px;">
+						<div class="login-header">
+							<div class="logo-container">
+								<i class="fas fa-headset"></i>
+							</div>
+							<h1><i class="fas fa-rocket me-2"></i>Loading Interface</h1>
+							<p>Initializing your agent workspace...</p>
+						</div>
+						<div class="login-body text-center">
+							<div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+								<span class="visually-hidden">Loading...</span>
+							</div>
+							<div class="progress mb-3" style="height: 8px;">
+								<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" id="loading-progress"></div>
+							</div>
+							<p class="text-muted" id="loading-status">Authenticating user...</p>
+						</div>
 					</div>
-					<h1><i class="fas fa-sign-in-alt me-2"></i>Complete Login</h1>
-					<p>Enter your user credentials and select campaign</p>
-				</div>
+				</div>';
 				
-				<div class="login-body">
-					<form name="vicidial_form" id="vicidial_form" action="'.$agcPAGE.'" method="post" novalidate>
-						<input type="hidden" name="DB" value="'.$DB.'" />
-						<input type="hidden" name="JS_browser_height" id="JS_browser_height" value="" />
-						<input type="hidden" name="JS_browser_width" id="JS_browser_width" value="" />
-						<input type="hidden" name="LOGINvarONE" id="LOGINvarONE" value="'.$LOGINvarONE.'" />
-						<input type="hidden" name="LOGINvarTWO" id="LOGINvarTWO" value="'.$LOGINvarTWO.'" />
-						<input type="hidden" name="LOGINvarTHREE" id="LOGINvarTHREE" value="'.$LOGINvarTHREE.'" />
-						<input type="hidden" name="LOGINvarFOUR" id="LOGINvarFOUR" value="'.$LOGINvarFOUR.'" />
-						<input type="hidden" name="LOGINvarFIVE" id="LOGINvarFIVE" value="'.$LOGINvarFIVE.'" />
-						
-						<!-- Phone credentials are already validated, show as readonly -->
-						<div class="alert alert-info alert-modern">
-							<i class="fas fa-check-circle me-2"></i>
-							Phone authentication successful for: <strong>'.$phone_login.'</strong>
+				### MAIN AGENT INTERFACE WITH MODERN BOOTSTRAP DESIGN ###
+				echo '<div id="main-interface" style="display: none;" class="container-fluid p-0">
+					<!-- Top Navigation Bar -->
+					<nav class="navbar navbar-expand-lg navbar-dark" style="background: var(--gradient-bg);">
+						<div class="container-fluid">
+							<a class="navbar-brand" href="#">
+								<i class="fas fa-headset me-2"></i>VICIdial Agent
+							</a>
+							
+							<div class="navbar-nav ms-auto">
+								<div class="nav-item dropdown">
+									<a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+										<i class="fas fa-user-circle me-2"></i>'.$VU_full_name.'
+									</a>
+									<ul class="dropdown-menu">
+										<li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+										<li><a class="dropdown-item" href="#"><i class="fas fa-clock me-2"></i>Timeclock</a></li>
+										<li><hr class="dropdown-divider"></li>
+										<li><a class="dropdown-item" href="#" onclick="fast_logout()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</nav>
+					
+					<!-- Main Content Area -->
+					<div class="row g-0">
+						<!-- Left Sidebar - Agent Controls -->
+						<div class="col-md-3 bg-light border-end">
+							<div class="p-3">
+								<h5 class="mb-3"><i class="fas fa-tachometer-alt me-2"></i>Agent Dashboard</h5>
+								
+								<!-- Agent Status -->
+								<div class="card mb-3">
+									<div class="card-header bg-primary text-white">
+										<i class="fas fa-circle me-2"></i>Status
+									</div>
+									<div class="card-body">
+										<div class="d-flex align-items-center mb-2">
+											<span class="badge bg-success me-2">READY</span>
+											<small class="text-muted">Agent: '.$VD_login.'</small>
+										</div>
+										<div class="d-flex align-items-center mb-2">
+											<i class="fas fa-bullhorn me-2 text-info"></i>
+											<small>Campaign: '.$VD_campaign.'</small>
+										</div>
+										<div class="d-flex align-items-center">
+											<i class="fas fa-phone me-2 text-secondary"></i>
+											<small>Extension: '.$phone_login.'</small>
+										</div>
+									</div>
+								</div>
+								
+								<!-- Call Controls -->
+								<div class="card mb-3">
+									<div class="card-header">
+										<i class="fas fa-phone-alt me-2"></i>Call Controls
+									</div>
+									<div class="card-body">
+										<div class="d-grid gap-2">
+											<button class="btn btn-success" id="dial-btn">
+												<i class="fas fa-phone me-2"></i>Dial
+											</button>
+											<button class="btn btn-danger" id="hangup-btn">
+												<i class="fas fa-phone-slash me-2"></i>Hangup
+											</button>
+											<button class="btn btn-warning" id="pause-btn">
+												<i class="fas fa-pause me-2"></i>Pause
+											</button>
+											<button class="btn btn-info" id="resume-btn">
+												<i class="fas fa-play me-2"></i>Resume
+											</button>
+										</div>
+									</div>
+								</div>
+								
+								<!-- Quick Actions -->
+								<div class="card mb-3">
+									<div class="card-header">
+										<i class="fas fa-bolt me-2"></i>Quick Actions
+									</div>
+									<div class="card-body">
+										<div class="d-grid gap-2">
+											<button class="btn btn-outline-primary btn-sm">
+												<i class="fas fa-search me-2"></i>Lead Search
+											</button>
+											<button class="btn btn-outline-secondary btn-sm">
+												<i class="fas fa-calendar me-2"></i>Callbacks
+											</button>
+											<button class="btn btn-outline-info btn-sm">
+												<i class="fas fa-file-alt me-2"></i>Manual Dial
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
 						</div>
 						
-						<input type="hidden" name="phone_login" value="'.$phone_login.'" />
-						<input type="hidden" name="phone_pass" value="'.$phone_pass.'" />
-						
-						<div class="form-floating">
-							<input type="text" class="form-control" id="VD_login" name="VD_login" placeholder="User Login" value="'.$VD_login.'" maxlength="20" required autofocus>
-							<label for="VD_login"><i class="fas fa-user me-2"></i>'._QXZ("User Login").'</label>
+						<!-- Main Work Area -->
+						<div class="col-md-9">
+							<div class="p-3">
+								<!-- Customer Information -->
+								<div class="card mb-3">
+									<div class="card-header d-flex justify-content-between align-items-center">
+										<span><i class="fas fa-user me-2"></i>Customer Information</span>
+										<span class="badge bg-primary" id="call-timer">00:00</span>
+									</div>
+									<div class="card-body">
+										<div class="row">
+											<div class="col-md-6">
+												<div class="mb-3">
+													<label class="form-label">Customer Name</label>
+													<input type="text" class="form-control" id="customer-name" value="No Customer">
+												</div>
+												<div class="mb-3">
+													<label class="form-label">Phone Number</label>
+													<input type="text" class="form-control" id="customer-phone" value="">
+												</div>
+											</div>
+											<div class="col-md-6">
+												<div class="mb-3">
+													<label class="form-label">Lead ID</label>
+													<input type="text" class="form-control" id="lead-id" value="">
+												</div>
+												<div class="mb-3">
+													<label class="form-label">Call Status</label>
+													<input type="text" class="form-control" id="call-status" value="Ready">
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								
+								<!-- Tabbed Content Area -->
+								<div class="card">
+									<div class="card-header">
+										<ul class="nav nav-tabs card-header-tabs" id="mainTabs" role="tablist">
+											<li class="nav-item" role="presentation">
+												<button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main-content" type="button" role="tab">
+													<i class="fas fa-home me-2"></i>Main
+												</button>
+											</li>
+											<li class="nav-item" role="presentation">
+												<button class="nav-link" id="script-tab" data-bs-toggle="tab" data-bs-target="#script-content" type="button" role="tab">
+													<i class="fas fa-file-text me-2"></i>Script
+												</button>
+											</li>
+											<li class="nav-item" role="presentation">
+												<button class="nav-link" id="form-tab" data-bs-toggle="tab" data-bs-target="#form-content" type="button" role="tab">
+													<i class="fas fa-wpforms me-2"></i>Form
+												</button>
+											</li>
+											<li class="nav-item" role="presentation">
+												<button class="nav-link" id="disposition-tab" data-bs-toggle="tab" data-bs-target="#disposition-content" type="button" role="tab">
+													<i class="fas fa-check-circle me-2"></i>Disposition
+												</button>
+											</li>
+										</ul>
+									</div>
+									<div class="card-body">
+										<div class="tab-content" id="mainTabContent">
+											<!-- Main Tab -->
+											<div class="tab-pane fade show active" id="main-content" role="tabpanel">
+												<div class="row">
+													<div class="col-12">
+														<div class="alert alert-success">
+															<h5><i class="fas fa-rocket me-2"></i>Welcome to VICIdial Modern Agent Interface!</h5>
+															<p class="mb-0">Your workspace is ready. Use the controls on the left to manage calls and the tabs above to access scripts, forms, and dispositions.</p>
+														</div>
+													</div>
+												</div>
+												
+												<!-- Real-time Stats -->
+												<div class="row">
+													<div class="col-md-3">
+														<div class="card bg-primary text-white">
+															<div class="card-body text-center">
+																<i class="fas fa-phone fa-2x mb-2"></i>
+																<h5>0</h5>
+																<small>Calls Today</small>
+															</div>
+														</div>
+													</div>
+													<div class="col-md-3">
+														<div class="card bg-success text-white">
+															<div class="card-body text-center">
+																<i class="fas fa-clock fa-2x mb-2"></i>
+																<h5>00:00:00</h5>
+																<small>Talk Time</small>
+															</div>
+														</div>
+													</div>
+													<div class="col-md-3">
+														<div class="card bg-warning text-white">
+															<div class="card-body text-center">
+																<i class="fas fa-pause fa-2x mb-2"></i>
+																<h5>00:00:00</h5>
+																<small>Pause Time</small>
+															</div>
+														</div>
+													</div>
+													<div class="col-md-3">
+														<div class="card bg-info text-white">
+															<div class="card-body text-center">
+																<i class="fas fa-chart-line fa-2x mb-2"></i>
+																<h5>0%</h5>
+																<small>Efficiency</small>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+											
+											<!-- Script Tab -->
+											<div class="tab-pane fade" id="script-content" role="tabpanel">
+												<div class="alert alert-info">
+													<i class="fas fa-file-text me-2"></i>Campaign script will be loaded here when a call is active.
+												</div>
+												<div id="script-display" class="border p-3 bg-light" style="min-height: 300px;">
+													<p class="text-muted text-center">No script loaded</p>
+												</div>
+											</div>
+											
+											<!-- Form Tab -->
+											<div class="tab-pane fade" id="form-content" role="tabpanel">
+												<div class="alert alert-info">
+													<i class="fas fa-wpforms me-2"></i>Lead information form will appear here.
+												</div>
+												<div id="form-display" style="min-height: 300px;">
+													<p class="text-muted text-center">No form loaded</p>
+												</div>
+											</div>
+											
+											<!-- Disposition Tab -->
+											<div class="tab-pane fade" id="disposition-content" role="tabpanel">
+												<div class="alert alert-warning">
+													<i class="fas fa-check-circle me-2"></i>Call disposition options will appear here after a call.
+												</div>
+												<div id="disposition-display" style="min-height: 300px;">
+													<p class="text-muted text-center">No dispositions available</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
 						</div>
-						
-						<div class="form-floating">
-							<input type="password" class="form-control" id="VD_pass" name="VD_pass" placeholder="User Password" value="'.$VD_pass.'" maxlength="20" required>
-							<label for="VD_pass"><i class="fas fa-key me-2"></i>'._QXZ("User Password").'</label>
-						</div>
-						
-						<div class="mb-3">
-							<label for="VD_campaign" class="form-label"><i class="fas fa-bullhorn me-2"></i>'._QXZ("Campaign").'</label>
-							<span id="LogiNCamPaigns">'.$camp_form_code.'</span>
-						</div>
-						
-						<button type="submit" class="btn btn-login" name="SUBMIT">
-							<div class="loading-spinner"></div>
-							<i class="fas fa-rocket me-2"></i>'._QXZ("START SESSION").'
-						</button>
-						
-						<div id="LogiNReseT">
-							<button type="button" class="btn btn-refresh" onclick="login_allowable_campaigns()">
-								<i class="fas fa-sync-alt me-2"></i>'._QXZ("Refresh Campaign List").'
-							</button>
-						</div>
-					</form>
-				</div>
+					</div>
+				</div>';
 				
-				<div class="utility-links">';
+				### JAVASCRIPT FOR MAIN INTERFACE ###
+				echo '
+				<script>
+				// Modern loading animation
+				let progress = 0;
+				const progressBar = document.getElementById("loading-progress");
+				const statusText = document.getElementById("loading-status");
+				const loadingSteps = [
+					"Authenticating user...",
+					"Loading campaign settings...", 
+					"Initializing phone connection...",
+					"Setting up interface...",
+					"Almost ready..."
+				];
 				
-		if ($hide_timeclock_link < 1) {
-			echo '<a href="./timeclock.php?referrer=agent&pl='.$phone_login.'&pp='.$phone_pass.'&VD_login='.$VD_login.'&VD_pass='.$VD_pass.'">
-					<i class="fas fa-clock"></i>'._QXZ("Timeclock").'
-				</a>';
-		}
-		echo $grey_link;
-		
-		echo '</div>
+				const loadingInterval = setInterval(() => {
+					progress += Math.random() * 15 + 5;
+					if (progress > 100) progress = 100;
+					
+					progressBar.style.width = progress + "%";
+					
+					const stepIndex = Math.floor((progress / 100) * (loadingSteps.length - 1));
+					statusText.textContent = loadingSteps[stepIndex];
+					
+					if (progress >= 100) {
+						clearInterval(loadingInterval);
+						setTimeout(() => {
+							document.getElementById("initial-loading").style.display = "none";
+							document.getElementById("main-interface").style.display = "block";
+						}, 1000);
+					}
+				}, 300);
 				
-				<div class="version-info">
-					<i class="fas fa-info-circle me-1"></i>
-					'._QXZ("VERSION").': '.$version.' &nbsp;•&nbsp; '._QXZ("BUILD").': '.$build.'
-				</div>
-			</div>
-		</div>
-		
-		<!-- Bootstrap 5 JS -->
-		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-		</body>
-		</html>';
-		exit;
-		}
-
-	// Eğer buraya geldiyse, authentication başarılı - ana agent interface'e geçiş yapılacak
-	// Bu noktadan sonra ana VICIdial agent interface kodları devam eder...
-	
-	// AUTHENTICATION BAŞARILI - ANA AGENT INTERFACE BAŞLIYOR
-	// Bu kısımdan sonra orijinal VICIdial agent interface kodları gelir
-	
-	echo "<title>"._QXZ("Agent web client")."</title>\n";
-	echo "</head>\n";
-	echo "<body>\n";
-	
-	// Ana agent interface için modern loading screen
-	echo '<div id="initial-loading" class="login-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: var(--gradient-bg);">
-		<div class="login-card" style="max-width: 400px;">
-			<div class="login-header">
-				<div class="logo-container">
-					<i class="fas fa-headset"></i>
-				</div>
-				<h1><i class="fas fa-rocket me-2"></i>Loading Interface</h1>
-				<p>Initializing your agent workspace...</p>
-			</div>
-			<div class="login-body text-center">
-				<div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
-					<span class="visually-hidden">Loading...</span>
-				</div>
-				<div class="progress mb-3" style="height: 8px;">
-					<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" id="loading-progress"></div>
-				</div>
-				<p class="text-muted" id="loading-status">Authenticating user...</p>
-			</div>
-		</div>
-	</div>
-	
-	<script>
-	// Modern loading animation
-	let progress = 0;
-	const progressBar = document.getElementById("loading-progress");
-	const statusText = document.getElementById("loading-status");
-	const loadingSteps = [
-		"Authenticating user...",
-		"Loading campaign settings...",
-		"Initializing phone connection...",
-		"Preparing interface...",
-		"Almost ready..."
-	];
-	
-	const loadingInterval = setInterval(() => {
-		progress += Math.random() * 20;
-		if (progress > 100) progress = 100;
-		
-		progressBar.style.width = progress + "%";
-		
-		const stepIndex = Math.floor((progress / 100) * (loadingSteps.length - 1));
-		statusText.textContent = loadingSteps[stepIndex];
-		
-		if (progress >= 100) {
-			clearInterval(loadingInterval);
-			setTimeout(() => {
-				document.getElementById("initial-loading").style.display = "none";
-			}, 500);
-		}
-	}, 200);
-	</script>';
-	
-	// Bu noktadan sonra orijinal VICIdial agent interface kodları devam eder
-	// Ancak modern CSS stilleri sayesinde daha güzel görünecektir
-	
-	// Agent interface ana kodları burada devam eder...
-	// (Orjinal dosyanın geri kalanı buraya gelir)
-	
-} // Main function closing brace
-
-// Bootstrap 5 JavaScript ve modern enhancements
-echo '
-<!-- Bootstrap 5 JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Modern Agent Interface Enhancements -->
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-	// Modern UI enhancements for agent interface
-	
-	// Add modern button styles to existing elements
-	const buttons = document.querySelectorAll("input[type=button], input[type=submit], button");
-	buttons.forEach(button => {
-		if (!button.classList.contains("btn")) {
-			button.classList.add("btn", "btn-outline-primary");
-		}
-	});
-	
-	// Add modern form control styles
-	const inputs = document.querySelectorAll("input[type=text], input[type=password], select, textarea");
-	inputs.forEach(input => {
-		if (!input.classList.contains("form-control")) {
-			input.classList.add("form-control");
-		}
-	});
-	
-	// Add modern table styles
-	const tables = document.querySelectorAll("table");
-	tables.forEach(table => {
-		if (!table.classList.contains("table")) {
-			table.classList.add("table", "table-hover", "table-striped");
-		}
-	});
-	
-	// Add smooth transitions to all elements
-	const allElements = document.querySelectorAll("*");
-	allElements.forEach(element => {
-		if (!element.style.transition) {
-			element.style.transition = "all 0.3s ease";
-		}
-	});
-	
-	// Modern tooltips for buttons and links
-	const tooltipTriggerList = [].slice.call(document.querySelectorAll("[title]"));
-	const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-		return new bootstrap.Tooltip(tooltipTriggerEl);
-	});
-	
-	// Add modern icons to common elements
-	const dialButtons = document.querySelectorAll("input[value*=DIAL], input[value*=Call]");
-	dialButtons.forEach(button => {
-		if (!button.innerHTML.includes("fa-")) {
-			button.value = "📞 " + button.value;
-		}
-	});
-	
-	const hangupButtons = document.querySelectorAll("input[value*=HANGUP], input[value*=Hangup]");
-	hangupButtons.forEach(button => {
-		if (!button.innerHTML.includes("fa-")) {
-			button.value = "📵 " + button.value;
-		}
-	});
-	
-	// Auto-refresh indicators
-	const autoRefreshElements = document.querySelectorAll("[id*=refresh], [id*=update]");
-	autoRefreshElements.forEach(element => {
-		element.style.position = "relative";
-		if (!element.querySelector(".refresh-indicator")) {
-			const indicator = document.createElement("span");
-			indicator.className = "refresh-indicator badge bg-success position-absolute top-0 start-100 translate-middle rounded-pill";
-			indicator.style.fontSize = "0.6em";
-			indicator.innerHTML = "●";
-			element.appendChild(indicator);
-		}
-	});
-});
-
-// Modern alert function override
-if (typeof originalAlert === "undefined") {
-	window.originalAlert = window.alert;
-	window.alert = function(message) {
-		// Create modern Bootstrap alert instead of browser alert
-		const alertHtml = `
-			<div class="alert alert-info alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; max-width: 400px;" role="alert">
-				<i class="fas fa-info-circle me-2"></i>
-				${message}
-				<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-			</div>
-		`;
-		document.body.insertAdjacentHTML("beforeend", alertHtml);
-		
-		// Auto dismiss after 5 seconds
-		setTimeout(() => {
-			const alerts = document.querySelectorAll(".alert");
-			if (alerts.length > 0) {
-				const lastAlert = alerts[alerts.length - 1];
-				const bsAlert = new bootstrap.Alert(lastAlert);
-				bsAlert.close();
-			}
-		}, 5000);
-	};
-}
-
-// Modern page visibility handling
-document.addEventListener("visibilitychange", function() {
-	if (document.hidden) {
-		document.title = "💤 " + document.title.replace("💤 ", "");
-	} else {
-		document.title = document.title.replace("💤 ", "");
-	}
-});
-
-// Modern keyboard shortcuts
-document.addEventListener("keydown", function(e) {
-	// Add modern keyboard shortcuts
-	if (e.ctrlKey || e.metaKey) {
-		switch(e.key) {
-			case "h":
-				e.preventDefault();
-				// Show keyboard shortcuts help
-				break;
-			case "r":
-				e.preventDefault();
-				// Refresh current view
-				location.reload();
-				break;
-		}
-	}
-});
-</script>
-
-</body>
-</html>';
+				// Initialize call timer
+				let callSeconds = 0;
+				function updateCallTimer() {
+					const timer = document.getElementById("call-timer");
+					if (timer) {
+						const minutes = Math.floor(callSeconds / 60);
+						const seconds = callSeconds % 60;
+						timer.textContent = String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+					}
+				}
+				
+				// Add event listeners for modern controls
+				document.addEventListener("DOMContentLoaded", function() {
+					// Call control buttons
+					const dialBtn = document.getElementById("dial-btn");
+					const hangupBtn = document.getElementById("hangup-btn");
+					const pauseBtn = document.getElementById("pause-btn");
+					const resumeBtn = document.getElementById("resume-btn");
+					
+					if (dialBtn) {
+						dialBtn.addEventListener("click", function() {
+							alert("Dial function will be implemented with VICIdial API");
+						});
+					}
+					
+					if (hangupBtn) {
+						hangupBtn.addEventListener("click", function() {
+							alert("Hangup function will be implemented with VICIdial API");
+						});
+					}
+					
+					if (pauseBtn) {
+						pauseBtn.addEventListener("click", function() {
+							alert("Pause function will be implemented with VICIdial API");
+						});
+					}
+					
+					if (resumeBtn) {
+						resumeBtn.addEventListener("click", function() {
+							alert("Resume function will be implemented with VICIdial API");
+						});
+					}
+					
+					// Update timer every second
+					setInterval(updateCallTimer, 1000);
+				});
+				
+				</script>';
+				
+				### BOOTSTRAP AND CLOSING TAGS ###
+				echo '
+				<!-- Bootstrap 5 JS -->
+				<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+				
+				</body>
+				</html>';
+				
+				##### END MAIN INTERFACE #####
+				}
 ?>
