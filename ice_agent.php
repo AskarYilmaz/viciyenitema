@@ -18951,22 +18951,290 @@ function phone_number_format(formatphone) {
 			document.getElementById("gender_list").selectedIndex = gIndex;
 			}
 		}
-       function showSessionModal(idi) {
-            const modal = document.getElementById(idi);
-            modal.classList.remove('hidden');
-            
-            // Body scroll'unu engelle
-            document.body.style.overflow = 'hidden';
-            
-            // Countdown başlat
-            startCountdown();
-            
-            // Escape tuşuyla kapatma
-            document.addEventListener('keydown', handleEscapeKey);
-            
-            // Focus trap (accessibility)
-            trapFocus(modal);
+     /*    Eklenen Kodlar     */
+
+	 / VICIdial Modern Loading ve Session Management
+
+// Global değişkenler
+let connectionCheckCount = 0;
+let loadingHidden = false;
+let sessionErrorShown = false;
+
+// Sayfa yüklendiğinde LoadingBox'ı göster
+document.addEventListener('DOMContentLoaded', function() {
+    // LoadingBox'ı göster
+    showDiv('LoadingBox');
+    
+    // Loading progress simulation
+    startLoadingProgress();
+    
+    console.log('VICIdial Modern Loading & Session boxes yüklendi.');
+});
+
+// Loading progress animasyonu
+function startLoadingProgress() {
+    const statusElement = document.getElementById('loading-status');
+    const progressBar = document.getElementById('loading-progress-bar');
+    
+    if (!statusElement) return;
+    
+    const loadingSteps = [
+        "Sistem bağlantısı kontrol ediliyor...",
+        "Kullanıcı oturumu doğrulanıyor...",
+        "Kampanya ayarları yükleniyor...",
+        "Telefon bağlantısı kuruluyor...",
+        "Arayüz hazırlanıyor...",
+        "Tamamlanıyor..."
+    ];
+    
+    let currentStep = 0;
+    
+    const stepInterval = setInterval(() => {
+        if (currentStep < loadingSteps.length && !loadingHidden) {
+            statusElement.textContent = loadingSteps[currentStep];
+            currentStep++;
+        } else {
+            clearInterval(stepInterval);
         }
+    }, 500);
+}
+
+// Session bilgilerini güncelle
+function updateSessionInfo() {
+    // Kullanıcı bilgisi
+    const userElement = document.getElementById('session-user');
+    if (userElement) {
+        if (typeof user !== 'undefined') {
+            userElement.textContent = user;
+        } else if (typeof VD_login !== 'undefined') {
+            userElement.textContent = VD_login;
+        } else {
+            userElement.textContent = 'agent_001';
+        }
+    }
+    
+    // Zaman bilgisi
+    const timeElement = document.getElementById('session-time');
+    if (timeElement) {
+        const now = new Date();
+        timeElement.textContent = now.toLocaleTimeString('tr-TR');
+    }
+    
+    // Bağlantı durumu
+    const connectionElement = document.getElementById('connection-status');
+    if (connectionElement) {
+        connectionElement.textContent = navigator.onLine ? 'Bağlantı kesildi' : 'Çevrimdışı';
+    }
+}
+
+// Bağlantı tekrar deneme
+function sessionRetry() {
+    hideDiv('NoneInSessionBox');
+    
+    // Loading göster
+    showDiv('LoadingBox');
+    
+    // VICIdial'ın refresh mekanizmasını kullan
+    if (typeof all_refresh === 'function') {
+        all_refresh();
+    } else if (typeof refresh_screen === 'function') {
+        refresh_screen();
+    } else {
+        // Fallback: sayfayı yenile
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+}
+
+// Sayfa yenile
+function sessionReload() {
+    hideDiv('NoneInSessionBox');
+    showDiv('LoadingBox');
+    setTimeout(() => {
+        window.location.reload();
+    }, 500);
+}
+
+// VICIdial'ın NoneInSession fonksiyonu - SADECE gerçek bağlantı sorunlarında
+function NoneInSession(message) {
+    // Eğer zaten gösterilmişse tekrar gösterme
+    if (sessionErrorShown) return;
+    
+    // Bağlantı kontrolü yap
+    if (!navigator.onLine || connectionCheckCount >= 3) {
+        sessionErrorShown = true;
+        
+        // Session bilgilerini güncelle
+        updateSessionInfo();
+        
+        // Loading'i gizle
+        hideDiv('LoadingBox');
+        
+        // Eğer mesaj varsa, içeriği güncelle
+        if (message) {
+            const messageElement = document.getElementById('session-message-content');
+            if (messageElement) {
+                messageElement.innerHTML = '<strong style="color: #ef4444;">Bağlantı Hatası:</strong> ' + message;
+            }
+        }
+        
+        // Session error göster
+        showDiv('NoneInSessionBox');
+        
+        // Body scroll'unu engelle
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// VICIdial'ın hideDiv fonksiyonunu override et
+const originalHideDiv = window.hideDiv;
+window.hideDiv = function(divvar) {
+    // Orijinal hideDiv fonksiyonunu çağır
+    if (originalHideDiv) {
+        originalHideDiv(divvar);
+    } else {
+        // Fallback: orijinal mantık
+        if (document.getElementById(divvar)) {
+            divref = document.getElementById(divvar).style;
+            divref.visibility = 'hidden';
+        }
+    }
+    
+    // Özel işlemler
+    if (divvar === 'LoadingBox') {
+        loadingHidden = true;
+        document.body.style.overflow = '';
+    } else if (divvar === 'NoneInSessionBox') {
+        sessionErrorShown = false;
+        document.body.style.overflow = '';
+    }
+};
+
+// VICIdial'ın showDiv fonksiyonunu override et
+const originalShowDiv = window.showDiv;
+window.showDiv = function(divvar) {
+    // Özel işlemler
+    if (divvar === 'NoneInSessionBox') {
+        updateSessionInfo();
+    } else if (divvar === 'LoadingBox') {
+        loadingHidden = false;
+    }
+    
+    // Orijinal showDiv fonksiyonunu çağır
+    if (originalShowDiv) {
+        originalShowDiv(divvar);
+    } else {
+        // Fallback: orijinal mantık
+        if (document.getElementById(divvar)) {
+            divref = document.getElementById(divvar).style;
+            divref.visibility = 'visible';
+        }
+    }
+    
+    // Özel işlemler
+    if (divvar === 'NoneInSessionBox') {
+        document.body.style.overflow = 'hidden';
+        trapFocus(document.getElementById('NoneInSessionBox'));
+    } else if (divvar === 'LoadingBox') {
+        document.body.style.overflow = 'hidden';
+    }
+};
+
+// all_refresh fonksiyonu için check_n=2 kontrolü
+const originalAllRefresh = window.all_refresh;
+if (originalAllRefresh) {
+    window.all_refresh = function() {
+        // Orijinal fonksiyonu çağır
+        const result = originalAllRefresh.apply(this, arguments);
+        
+        // check_n kontrolü (VICIdial'ın kendi mantığı)
+        if (typeof check_n !== 'undefined' && check_n == 2) {
+            hideDiv('LoadingBox');
+        }
+        
+        return result;
+    };
+}
+
+// Bağlantı durumu kontrolü
+window.addEventListener('online', function() {
+    sessionErrorShown = false;
+    connectionCheckCount = 0;
+});
+
+window.addEventListener('offline', function() {
+    connectionCheckCount = 999; // Force session error
+});
+
+// ESC tuşuyla kapatma
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const sessionBox = document.getElementById('NoneInSessionBox');
+        if (sessionBox && sessionBox.style.visibility === 'visible') {
+            hideDiv('NoneInSessionBox');
+        }
+    }
+});
+
+// Focus trap fonksiyonu
+function trapFocus(element) {
+    if (!element || element.style.visibility !== 'visible') return;
+    
+    const focusableElements = element.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    if (focusableElements.length > 0) {
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        setTimeout(() => firstElement.focus(), 100);
+
+        const keydownHandler = (e) => {
+            if (e.key === 'Tab') {
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        lastElement.focus();
+                        e.preventDefault();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        firstElement.focus();
+                        e.preventDefault();
+                    }
+                }
+            }
+        };
+
+        element.addEventListener('keydown', keydownHandler);
+        
+        const observer = new MutationObserver(() => {
+            if (element.style.visibility === 'hidden') {
+                element.removeEventListener('keydown', keydownHandler);
+                observer.disconnect();
+            }
+        });
+        observer.observe(element, { attributes: true, attributeFilter: ['style'] });
+    }
+}
+
+// Test fonksiyonları
+function testLoadingBox() {
+    showDiv('LoadingBox');
+}
+
+function testSessionBox() {
+    connectionCheckCount = 3; // Force error condition
+    NoneInSession('Test bağlantı hatası');
+}
+
+function hideLoadingBox() {
+    hideDiv('LoadingBox');
+}
+
+console.log('Test komutları: testLoadingBox(), testSessionBox(), hideLoadingBox()');
+
 
  
 	</script>
@@ -19442,7 +19710,57 @@ function phone_number_format(formatphone) {
             font-size: 0.9rem;
         }
 
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0) scale(1);
+    }
+}
 
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes spin {
+    to { 
+        transform: rotate(360deg); 
+    }
+}
+
+@keyframes progressBar {
+    0% { 
+        width: 0%; 
+    }
+    100% { 
+        width: 100%; 
+    }
+}
+
+/* Responsive tasarım */
+@media (max-width: 768px) {
+    #NoneInSessionBox, #LoadingBox {
+        width: 95% !important;
+        max-width: 95% !important;
+    }
+    #NoneInSessionBox .session-actions,
+    #LoadingBox .loading-actions {
+        flex-direction: column;
+    }
+    #NoneInSessionBox .session-btn,
+    #LoadingBox .loading-btn {
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+}
 
 
 </style>
@@ -19456,17 +19774,140 @@ $zi=2;
 
 <form name=vicidial_form id=vicidial_form onsubmit="return false;">
 
-<span style="position:absolute;left:0px;top:0px;z-index:300;" id="LoadingBox">
-    <table border="0" bgcolor="white" width="<?php echo $JS_browser_width ?>px" height="<?php echo $JS_browser_height ?>px"><tr><td align="center" valign="top">
- <br />
- <br />
- <font class="loading_text"><?php echo _QXZ("Loading..."); ?></font>
- <br />
- <br />
-    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <img src="./images/<?php echo _QXZ("agent_loading_animation.gif"); ?>" height="206px" width="206px" alt="<?php echo _QXZ("Loading..."); ?>" />
- <br />
- <br />
-    </td></tr></table>
+<!-- LoadingBox - Modern Loading Spinner -->
+<span id="LoadingBox" style="
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 8888;
+    max-width: 400px;
+    width: 90%;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: visible;
+">
+    <div style="
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+    ">
+        <!-- Header -->
+        <div style="
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+            text-align: center;
+            color: white;
+            position: relative;
+        ">
+            <!-- Pattern Background -->
+            <div style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.1\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E') repeat;
+                opacity: 0.1;
+            "></div>
+            
+            <!-- Loading Icon -->
+            <div style="
+                width: 70px;
+                height: 70px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 1rem;
+                position: relative;
+                z-index: 1;
+            ">
+                <div style="
+                    width: 30px;
+                    height: 30px;
+                    border: 3px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 50%;
+                    border-top-color: white;
+                    animation: spin 1s ease-in-out infinite;
+                "></div>
+            </div>
+            
+            <!-- Title -->
+            <h3 style="
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                margin-top: 0;
+                position: relative;
+                z-index: 1;
+            ">Yükleniyor</h3>
+            
+            <!-- Subtitle -->
+            <p style="
+                opacity: 0.9;
+                font-size: 0.95rem;
+                margin: 0;
+                position: relative;
+                z-index: 1;
+            ">Arayüz hazırlanıyor...</p>
+        </div>
+        
+        <!-- Body -->
+        <div style="padding: 2rem;">
+            <!-- Progress Bar -->
+            <div style="
+                background: #f1f5f9;
+                border-radius: 10px;
+                height: 8px;
+                overflow: hidden;
+                margin-bottom: 1rem;
+            ">
+                <div id="loading-progress-bar" style="
+                    background: linear-gradient(90deg, #667eea, #764ba2);
+                    height: 100%;
+                    border-radius: 10px;
+                    width: 0%;
+                    animation: progressBar 3s ease-in-out infinite;
+                "></div>
+            </div>
+            
+            <!-- Loading Status -->
+            <div id="loading-status" style="
+                font-size: 0.9rem;
+                color: #64748b;
+                text-align: center;
+                margin-bottom: 1.5rem;
+            ">
+                Sistem bağlantısı kontrol ediliyor...
+            </div>
+            
+            <!-- Loading Details -->
+            <div style="
+                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+                border: 1px solid #bae6fd;
+                border-radius: 12px;
+                padding: 1rem;
+                font-size: 0.85rem;
+                color: #0369a1;
+            ">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="
+                        width: 8px;
+                        height: 8px;
+                        background: #0369a1;
+                        border-radius: 50%;
+                        animation: pulse 1.5s infinite;
+                    "></div>
+                    <span>Veri senkronizasyonu devam ediyor...</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </span>
 
 <!-- ZZZZZZZZZZZZ  header -->
@@ -20405,207 +20846,197 @@ if ($agent_display_dialable_leads > 0)
 </span>
 
   <!-- Session Modal - Hidden by default -->
-    <!-- NoneInSessionBox Span - VICIdial login tarzında -->
-    <span id="NoneInSessionBox" style="
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 99999;
-        max-width: 500px;
-        width: 90%;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        display: none;
+    <!-- 2. Bu HTML kodunu body içine, diğer span'ların yakınına ekleyin -->
+<!-- NoneInSessionBox - Session Error (Sadece bağlantı koptuğunda görünür) -->
+<span id="NoneInSessionBox" style="
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    max-width: 500px;
+    width: 90%;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: hidden;
+">
+    <div style="
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        overflow: hidden;
     ">
+        <!-- Header -->
         <div style="
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            overflow: hidden;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            padding: 2rem;
+            text-align: center;
+            color: white;
+            position: relative;
         ">
-            <!-- Header -->
+            <!-- Pattern Background -->
             <div style="
-                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                padding: 2rem;
-                text-align: center;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.1\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E') repeat;
+                opacity: 0.1;
+            "></div>
+            
+            <!-- Close Button -->
+            <button onclick="hideDiv('NoneInSessionBox')" style="
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                border-radius: 50%;
+                width: 35px;
+                height: 35px;
                 color: white;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1rem;
+                z-index: 2;
+            " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.transform='rotate(90deg)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.transform='rotate(0deg)'">
+                ×
+            </button>
+            
+            <!-- Error Icon -->
+            <div style="
+                width: 70px;
+                height: 70px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 1rem;
+                animation: pulse 2s infinite;
+                font-size: 2rem;
                 position: relative;
+                z-index: 1;
             ">
-                <!-- Close Button -->
-                <button onclick="hideDiv('NoneInSessionBox')" style="
-                    position: absolute;
-                    top: 1rem;
-                    right: 1rem;
-                    background: rgba(255, 255, 255, 0.2);
-                    border: none;
-                    border-radius: 50%;
-                    width: 35px;
-                    height: 35px;
+                ⚠️
+            </div>
+            
+            <!-- Title -->
+            <h3 style="
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+                margin-top: 0;
+                position: relative;
+                z-index: 1;
+            ">Bağlantı Hatası</h3>
+            
+            <!-- Subtitle -->
+            <p style="
+                opacity: 0.9;
+                font-size: 0.95rem;
+                margin: 0;
+                position: relative;
+                z-index: 1;
+            ">Sunucu bağlantısı kesildi</p>
+        </div>
+        
+        <!-- Body -->
+        <div style="padding: 2rem;">
+            <!-- Message -->
+            <div id="session-message-content" style="
+                font-size: 1rem;
+                color: #1e293b;
+                line-height: 1.6;
+                margin-bottom: 1.5rem;
+                text-align: center;
+            ">
+                <strong style="color: #ef4444;">Bağlantı Sorunu:</strong> Sunucu ile bağlantı kurulamıyor. 
+                İnternet bağlantınızı kontrol edin veya sayfayı yenileyin.
+            </div>
+            
+            <!-- Connection Details -->
+            <div style="
+                background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+                border: 1px solid #fecaca;
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+            ">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                    <span style="color: #ef4444; width: 20px; text-align: center;">👤</span>
+                    <span style="font-weight: 600; color: #1e293b; min-width: 100px;">Kullanıcı:</span>
+                    <span style="color: #64748b;" id="session-user">Loading...</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                    <span style="color: #ef4444; width: 20px; text-align: center;">🕐</span>
+                    <span style="font-weight: 600; color: #1e293b; min-width: 100px;">Kesinti Zamanı:</span>
+                    <span style="color: #64748b;" id="session-time">Loading...</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem;">
+                    <span style="color: #ef4444; width: 20px; text-align: center;">🌐</span>
+                    <span style="font-weight: 600; color: #1e293b; min-width: 100px;">Bağlantı:</span>
+                    <span style="color: #64748b;" id="connection-status">Offline</span>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="session-actions" style="
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+                flex-wrap: wrap;
+            ">
+                <button class="session-btn" onclick="sessionRetry()" style="
+                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
                     color: white;
+                    border: none;
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 10px;
+                    font-weight: 600;
                     cursor: pointer;
+                    min-width: 140px;
                     transition: all 0.3s ease;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.transform='rotate(90deg)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.transform='rotate(0deg)'">
-                    <i class="fas fa-times"></i>
+                    gap: 0.5rem;
+                    font-size: 0.9rem;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(239, 68, 68, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    🔄 Tekrar Dene
                 </button>
                 
-                <!-- Icon -->
-                <div style="
-                    width: 70px;
-                    height: 70px;
-                    background: rgba(255, 255, 255, 0.2);
-                    border-radius: 50%;
+                <button class="session-btn" onclick="sessionReload()" style="
+                    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+                    color: white;
+                    border: none;
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 10px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    min-width: 140px;
+                    transition: all 0.3s ease;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    margin: 0 auto 1rem;
-                    animation: pulse 2s infinite;
-                ">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: white;"></i>
-                </div>
-                
-                <!-- Title -->
-                <h3 style="
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    margin-bottom: 0.5rem;
-                    margin-top: 0;
-                ">Session Hatası</h3>
-                
-                <!-- Subtitle -->
-                <p style="
-                    opacity: 0.9;
-                    font-size: 0.95rem;
-                    margin: 0;
-                ">Oturum geçersiz durumda</p>
-            </div>
-            
-            <!-- Body -->
-            <div style="padding: 2rem;">
-                <!-- Message -->
-                <p style="
-                    font-size: 1rem;
-                    color: #1e293b;
-                    line-height: 1.6;
-                    margin-bottom: 1.5rem;
-                    text-align: center;
-                ">
-                    <strong style="color: #ef4444;">Uyarı:</strong> Mevcut oturumunuz geçersiz durumda. 
-                    Bu durum güvenlik nedenleriyle veya sistem güncellemesi sebebiyle oluşmuş olabilir.
-                </p>
-                
-                <!-- Details Box -->
-                <div style="
-                    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-                    border: 1px solid #fecaca;
-                    border-radius: 12px;
-                    padding: 1.5rem;
-                    margin-bottom: 2rem;
-                ">
-                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.95rem;">
-                        <i class="fas fa-user" style="color: #ef4444; width: 20px; text-align: center;"></i>
-                        <span style="font-weight: 600; color: #1e293b; min-width: 100px;">Kullanıcı:</span>
-                        <span style="color: #64748b;">agent_001</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.95rem;">
-                        <i class="fas fa-clock" style="color: #ef4444; width: 20px; text-align: center;"></i>
-                        <span style="font-weight: 600; color: #1e293b; min-width: 100px;">Son Aktivite:</span>
-                        <span style="color: #64748b;">2 dakika önce</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem;">
-                        <i class="fas fa-shield-alt" style="color: #ef4444; width: 20px; text-align: center;"></i>
-                        <span style="font-weight: 600; color: #1e293b; min-width: 100px;">Session ID:</span>
-                        <span style="color: #64748b;">VIC_20241208_15:30</span>
-                    </div>
-                </div>
-                
-                <!-- Actions -->
-                <div style="
-                    display: flex;
-                    gap: 1rem;
-                    justify-content: center;
-                    flex-wrap: wrap;
-                ">
-                    <button onclick="redirectToLogin()" style="
-                        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                        color: white;
-                        border: none;
-                        padding: 0.75rem 1.5rem;
-                        border-radius: 10px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        min-width: 140px;
-                        transition: all 0.3s ease;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 0.5rem;
-                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(239, 68, 68, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Tekrar Giriş
-                    </button>
-                    
-                    <button onclick="refreshSession()" style="
-                        background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-                        color: white;
-                        border: none;
-                        padding: 0.75rem 1.5rem;
-                        border-radius: 10px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        min-width: 140px;
-                        transition: all 0.3s ease;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 0.5rem;
-                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(71, 85, 105, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                        <i class="fas fa-sync-alt"></i>
-                        Session Yenile
-                    </button>
-                </div>
+                    gap: 0.5rem;
+                    font-size: 0.9rem;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(71, 85, 105, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    🔃 Sayfayı Yenile
+                </button>
             </div>
         </div>
-    </span>
+    </div>
+</span>
 
-    <style>
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -50%) translateY(30px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%) translateY(0) scale(1);
-            }
-        }
-        
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-        }
-        
-        #NoneInSessionBox {
-            animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        }
-        
-        @media (max-width: 768px) {
-            #NoneInSessionBox {
-                width: 95% !important;
-                max-width: 95% !important;
-            }
-        }
-    </style>
 
+  
  
 <span style="position:absolute;left:0px;top:30px;z-index:<?php $zi++; echo $zi ?>;" id="CustomerGoneBox">
     <table border="0" bgcolor="#CCFFFF" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center"> <font class="sd_text"><?php echo _QXZ("Customer has hung up:"); ?> <span id="CustomerGoneChanneL"></span><br />
