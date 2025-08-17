@@ -7307,7 +7307,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 		alt_dial_active = 0;
 		alt_dial_status_display = 0;
 		open_dispo_screen=1;
-		document.getElementById("MainStatuSSpan").innerHTML = "<?php echo _QXZ("Next"); ?>";
+		// Kapatldı 	document.getElementById("MainStatuSSpan").innerHTML = "<?php echo _QXZ("Next"); ?>";
 		}
 // ################################################################################
 // Insert or update the vicidial_log entry for a customer call
@@ -7344,7 +7344,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						timer_alt_trigger=1;
 						}
 					var man_status = "<?php echo _QXZ("Dial Alt Phone Number:"); ?> <a href=\"#\" onclick=\"ManualDialOnly('MaiNPhonE','YES')\"><font class=\"preview_text\"><?php echo _QXZ("MAIN PHONE"); ?></font></a> <?php echo _QXZ("or"); ?> <a href=\"#\" onclick=\"ManualDialOnly('ALTPhonE','YES')\"><font class=\"preview_text\"><?php echo _QXZ("ALT PHONE"); ?></font></a> <?php echo _QXZ("or"); ?> <a href=\"#\" onclick=\"ManualDialOnly('AddresS3','YES')\"><font class=\"preview_text\"><?php echo _QXZ("ADDRESS3"); ?></font></a> <?php echo _QXZ("or"); ?> <a href=\"#\" onclick=\"ManualDialAltDonE('YES')\"><font class=\"preview_text_red\"><?php echo _QXZ("FINISH LEAD"); ?></font></a>" + status_display_content; 
-					document.getElementById("MainStatuSSpan").innerHTML = man_status;
+					// Kapatldı 	document.getElementById("MainStatuSSpan").innerHTML = man_status;
 					}
 				}
 			}
@@ -8440,18 +8440,23 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 									{
 									TEMP_VDIC_web_form_address_three = URLDecode(VDIC_web_form_address_three,'YES','DEFAULT','3');
 									}
-
-								document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
-
+	
+								//document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
+								document.getElementById("WebFormSpan").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form"); ?></a>";
+     
 								if (enable_second_webform > 0)
 									{
-									document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
-									}
+									//document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
+									document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 2"); ?></a>";
+                   
+								    }
 
 								if (enable_third_webform > 0)
 									{
-									document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
-									}
+									//document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
+									document.getElementById("WebFormSpanThree").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 3"); ?></a>";
+                    
+								    }
 
 								if (CalL_ScripT_color.length > 1)
 									{document.getElementById("ScriptContents").style.backgroundColor = CalL_ScripT_color;}
@@ -8761,7 +8766,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							if (status_display_LISTID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("List:"); ?> " + document.vicidial_form.list_id.value;}
 
 					//		alert(document.getElementById("MainStatuSSpan").innerHTML);
-							document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Calling:"); ?> " + status_display_number + " " + status_display_content + " &nbsp; <?php echo _QXZ("Waiting for Ring..."); ?> " + MD_ring_secondS + " <?php echo _QXZ("seconds"); ?>";
+						// Kapatldı 		document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Calling:"); ?> " + status_display_number + " " + status_display_content + " &nbsp; <?php echo _QXZ("Waiting for Ring..."); ?> " + MD_ring_secondS + " <?php echo _QXZ("seconds"); ?>";
 					//		alert("channel not found yet:\n" + campaign);
 							}
 						}
@@ -8806,7 +8811,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								if (status_display_LEADID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("Lead:"); ?> " + document.vicidial_form.lead_id.value;}
 								if (status_display_LISTID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("List:"); ?> " + document.vicidial_form.list_id.value;}
 
-								document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Called 3rd party:"); ?> " + called3rdparty + " " + status_display_content;
+							// Kapatldı 		document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Called 3rd party:"); ?> " + called3rdparty + " " + status_display_content;
 
                                 document.getElementById("Leave3WayCall").innerHTML ="<a href=\"#\" onclick=\"leave_3way_call('FIRST','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_XB_leave3waycall.gif"); ?>\" border=\"0\" alt=\"LEAVE 3-WAY CALL\" style=\"vertical-align:middle\" /></a>";
 
@@ -8873,7 +8878,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								if (status_display_LEADID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("Lead:"); ?> " + document.vicidial_form.lead_id.value;}
 								if (status_display_LISTID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("List:"); ?> " + document.vicidial_form.list_id.value;}
 
-								document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Called:"); ?> " + status_display_number + " " + status_display_content + " &nbsp;"; 
+								// Kapatldı 	document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Called:"); ?> " + status_display_number + " " + status_display_content + " &nbsp;"; 
 
                                // document.getElementById("ParkControl").innerHTML ="<a href=\"#\" onclick=\"mainxfer_send_redirect('ParK','" + lastcustchannel + "','" + lastcustserverip + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_parkcall.gif"); ?>\" border=\"0\" alt=\"Park Call\" /></a>";
 									document.getElementById("ParkControl").innerHTML ="<a  href=\"#\" onclick=\"mainxfer_send_redirect('ParK','" + lastcustchannel + "','" + lastcustserverip + "','','','','YES');return false;\" class=\"btn btn-warning w-100\"><i class=\"fas fa-parking me-1\"></i><br><small><?php echo _QXZ("Park Call"); ?></small></a>";
@@ -8899,9 +8904,13 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
                                 document.getElementById("DialBlindVMail").innerHTML = "<a href=\"#\" onclick=\"mainxfer_send_redirect('XfeRVMAIL','" + lastcustchannel + "','" + lastcustserverip + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_XB_ammessage.gif"); ?>\" border=\"0\" alt=\"Blind Transfer VMail Message\" style=\"vertical-align:middle\" /></a>";
 
-                                document.getElementById("VolumeUpSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('UP','" + MDchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_up.gif"); ?>\" border=\"0\"></a>";
-                                document.getElementById("VolumeDownSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('DOWN','" + MDchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_down.gif"); ?>\" border=\"0\"></a>";
+                               // document.getElementById("VolumeUpSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('UP','" + MDchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_up.gif"); ?>\" border=\"0\"></a>";
+                               // document.getElementById("VolumeDownSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('DOWN','" + MDchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_down.gif"); ?>\" border=\"0\"></a>";
 
+								 document.getElementById("VolumeUpSpan").innerHTML ="<a href=\"#\" onclick=\"volume_control('UP','" + MDchannel + "','');return false;\" class=\"btn btn-primary btn-sm w-100\"><i class=\"fas fa-volume-up text-danger\"></i></a>";
+                                document.getElementById("VolumeDownSpan").innerHTML ="<a href=\"#\" onclick=\"volume_control('DOWN','" + MDchannel + "','');return false;\" class=\"btn btn-primary btn-sm w-100\"><i class=\"fas fa-volume-down text-danger\"></i></a>";
+
+								
 								if ( (quick_transfer_button == 'IN_GROUP') || (quick_transfer_button == 'LOCKED_IN_GROUP') )
 									{
 									quick_transfer_button_orig='';
@@ -9305,15 +9314,21 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							TEMP_VDIC_web_form_address_three = URLDecode(VDIC_web_form_address_three,'YES','DEFAULT','3');
 							}
 
-                        document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
+                        //document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
+						document.getElementById("WebFormSpan").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form"); ?></a>";
+    
 						if (enable_second_webform > 0)
 							{
-                            document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
-							}
+                            //document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
+							document.getElementById("WebFormSpanTwo").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 2"); ?></a>";
+                    
+						    }
 						if (enable_third_webform > 0)
 							{
-                            document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
-							}
+                           // document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
+							document.getElementById("WebFormSpanTwo").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 3"); ?></a>";
+                    
+						    }
 
 						agent_events('update_fields', event_data, aec);   aec++;
 						}
@@ -9369,7 +9384,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					{
 					document.getElementById("DiaLControl").innerHTML = DiaLControl_auto_HTML;
 					}
-				document.getElementById("MainStatuSSpan").style.background = panel_bgcolor;
+				// Kapatldı 	document.getElementById("MainStatuSSpan").style.background = panel_bgcolor;
 				reselect_alt_dial = 0;
 				}
 			}
@@ -9568,7 +9583,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 										{
 										document.getElementById("DiaLControl").innerHTML = DiaLControl_auto_HTML;
 										}
-									document.getElementById("MainStatuSSpan").style.background = panel_bgcolor;
+									// Kapatldı 	document.getElementById("MainStatuSSpan").style.background = panel_bgcolor;
 									reselect_alt_dial = 0;
 									}
 								}
@@ -9803,7 +9818,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								if (status_display_LEADID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("Lead:"); ?> " + document.vicidial_form.lead_id.value;}
 								if (status_display_LISTID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("List:"); ?> " + document.vicidial_form.list_id.value;}
 
-								document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Calling:"); ?> " + status_display_number + " " + status_display_content + " &nbsp; " + man_status;
+						// Kapatldı 			document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Calling:"); ?> " + status_display_number + " " + status_display_content + " &nbsp; " + man_status;
 								if ( (dialed_label.length < 2) || (dialed_label=='NONE') ) {dialed_label='MAIN';}
 
 								if (hide_gender > 0)
@@ -10187,7 +10202,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								hideDiv('post_phone_time_diff_span');
 								}
 
-							document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Lead skipped, go on to next lead"); ?>";
+							// Kapatldı 	document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Lead skipped, go on to next lead"); ?>";
 
 							if (dial_method == "INBOUND_MAN")
 								{
@@ -10381,7 +10396,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							if (status_display_LEADID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("Lead:"); ?> " + document.vicidial_form.lead_id.value;}
 							if (status_display_LISTID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("List:"); ?> " + document.vicidial_form.list_id.value;}
 
-							document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Calling:"); ?> " + status_display_number + " " + status_display_content + " &nbsp; <?php echo _QXZ("Waiting for Ring..."); ?>";
+							// Kapatldı 	document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Calling:"); ?> " + status_display_number + " " + status_display_content + " &nbsp; <?php echo _QXZ("Waiting for Ring..."); ?>";
 							
                             //document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"dialedcall_send_hangup('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
 							document.getElementById("HangupControl").innerHTML = "<a  href=\"#\" onclick=\"dialedcall_send_hangup('','','','','YES');\" class=\"btn btn-danger w-100\"> <i class=\"fas fa-phone-slash me-1\" ></i><br ><small><?php echo _QXZ("Hangup"); ?></small></a>";
@@ -11209,7 +11224,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							if (status_display_LEADID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("Lead:"); ?> " + document.vicidial_form.lead_id.value;}
 							if (status_display_LISTID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("List:"); ?> " + document.vicidial_form.list_id.value;}
 
-							document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Incoming:"); ?> " + dial_display_number + " " + custom_call_id + " " + status_display_content + " &nbsp; " + VDIC_fronter; 
+							// Kapatldı 	document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Incoming:"); ?> " + dial_display_number + " " + custom_call_id + " " + status_display_content + " &nbsp; " + VDIC_fronter; 
 
 							if (CBentry_time.length > 2)
 								{
@@ -11249,7 +11264,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								inOUT = 'IN';
 								if (VDIC_data_VDIG[2].length > 2)
 									{
-									document.getElementById("MainStatuSSpan").style.background = VDIC_data_VDIG[2];
+										// Kapatldı document.getElementById("MainStatuSSpan").style.background = VDIC_data_VDIG[2];
 									}
 								var dispnum = document.vicidial_form.phone_number.value;
 								var status_display_number = phone_number_format(dispnum);
@@ -11266,7 +11281,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								if (status_display_ingroup == 'DISABLED')
 									{temp_status_display_ingroup='';}
 
-								document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Incoming:"); ?> " + dial_display_number + " " + custom_call_id + " " + temp_status_display_ingroup + "&nbsp; " + VDIC_fronter + " " + status_display_content; 
+									// Kapatldı document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Incoming:"); ?> " + dial_display_number + " " + custom_call_id + " " + temp_status_display_ingroup + "&nbsp; " + VDIC_fronter + " " + status_display_content; 
 								}
 
                           //  document.getElementById("ParkControl").innerHTML ="<a href=\"#\" onclick=\"mainxfer_send_redirect('ParK','" + lastcustchannel + "','" + lastcustserverip + "','','','','YES');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_LB_parkcall.gif"); ?>\" border=\"0\" alt=\"Park Call\" /></a>";
@@ -11387,9 +11402,13 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 							if (lastcustserverip == server_ip)
 								{
-                                document.getElementById("VolumeUpSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('UP','" + lastcustchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_up.gif"); ?>\" border=\"0\" /></a>";
-                                document.getElementById("VolumeDownSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('DOWN','" + lastcustchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_down.gif"); ?>\" border=\"0\" /></a>";
-								}
+                                //document.getElementById("VolumeUpSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('UP','" + lastcustchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_up.gif"); ?>\" border=\"0\" /></a>";
+                               // document.getElementById("VolumeDownSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('DOWN','" + lastcustchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_down.gif"); ?>\" border=\"0\" /></a>";
+								
+ 								document.getElementById("VolumeUpSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('UP','" + lastcustchannel + "','');return false;\" class=\"btn btn-primary btn-sm w-100\"><i class=\"fas fa-volume-up text-danger\"></i></a>";
+                                document.getElementById("VolumeDownSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('DOWN','" + lastcustchannel + "','');return false;\" class=\"btn btn-primary btn-sm w-100\"><i class=\"fas fa-volume-down text-danger\"></i></a>";
+								
+							    }
 
 							if (dial_method == "INBOUND_MAN")
 								{
@@ -11448,18 +11467,23 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								TEMP_VDIC_web_form_address_three = URLDecode(VDIC_web_form_address_three,'YES','DEFAULT','3');
 								}
 
-
-                            document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
-
+		
+                           // document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
+							document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form"); ?></a>";
+                    
 							if (enable_second_webform > 0)
 								{
-                                document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
-								}
+                               // document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
+								 document.getElementById("WebFormSpanTwo").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 2"); ?></a>";
+                   
+							    }
 
 							if (enable_third_webform > 0)
 								{
-                                document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
-								}
+                               // document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
+								document.getElementById("WebFormSpanThree").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 3"); ?></a>";
+                    
+							    }
 
 							if ( (LIVE_campaign_recording == 'ALLCALLS') || (LIVE_campaign_recording == 'ALLFORCE') )
 								{all_record = 'YES';}
@@ -11999,7 +12023,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 							if (status_display_LEADID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("Lead:"); ?> " + document.vicidial_form.lead_id.value;}
 							if (status_display_LISTID > 0) {status_display_content = status_display_content + " <?php echo _QXZ("List:"); ?> " + document.vicidial_form.list_id.value;}
 
-							document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Incoming:"); ?> " + dial_display_number + " " + custom_call_id + " " + status_display_content + " &nbsp; " + VDIC_fronter; 
+								// Kapatldı document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Incoming:"); ?> " + dial_display_number + " " + custom_call_id + " " + status_display_content + " &nbsp; " + VDIC_fronter; 
 
 							if (CBentry_time.length > 2)
 								{
@@ -12039,7 +12063,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								inOUT = 'IN';
 								if (VDIC_data_VDIG[2].length > 2)
 									{
-									document.getElementById("MainStatuSSpan").style.background = VDIC_data_VDIG[2];
+									// Kapatldı 	document.getElementById("MainStatuSSpan").style.background = VDIC_data_VDIG[2];
 									}
 								var dispnum = document.vicidial_form.phone_number.value;
 								var status_display_number = phone_number_format(dispnum);
@@ -12056,7 +12080,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								if (status_display_ingroup == 'DISABLED')
 									{temp_status_display_ingroup='';}
 
-								document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Incoming:"); ?> " + dial_display_number + " " + custom_call_id + " " + temp_status_display_ingroup + "&nbsp; " + VDIC_fronter + " " + status_display_content; 
+									// Kapatldı document.getElementById("MainStatuSSpan").innerHTML = " <?php echo _QXZ("Incoming:"); ?> " + dial_display_number + " " + custom_call_id + " " + temp_status_display_ingroup + "&nbsp; " + VDIC_fronter + " " + status_display_content; 
 								}
 
 							//document.getElementById("HangupControl").innerHTML = "<a href=\"#\" onclick=\"dialedcall_send_hangup('','','','','YES');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_hangupcustomer.gif"); ?>\" border=\"0\" alt=\"Hangup Customer\" /></a>";
@@ -12151,8 +12175,13 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 							if (lastcustserverip == server_ip)
 								{
-								document.getElementById("VolumeUpSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('UP','" + lastcustchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_up.gif"); ?>\" border=\"0\" /></a>";
-								document.getElementById("VolumeDownSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('DOWN','" + lastcustchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_down.gif"); ?>\" border=\"0\" /></a>";
+								//document.getElementById("VolumeUpSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('UP','" + lastcustchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_up.gif"); ?>\" border=\"0\" /></a>";
+								//document.getElementById("VolumeDownSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('DOWN','" + lastcustchannel + "','');return false;\"><img src=\"./images/<?php echo _QXZ("vdc_volume_down.gif"); ?>\" border=\"0\" /></a>";
+							
+								document.getElementById("VolumeUpSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('UP','" + lastcustchannel + "','');return false;\" class=\"btn btn-primary btn-sm w-100\"><i class=\"fas fa-volume-up text-danger\"></i></a>";
+								document.getElementById("VolumeDownSpan").innerHTML = "<a href=\"#\" onclick=\"volume_control('DOWN','" + lastcustchannel + "','');return false;\" class=\"btn btn-primary btn-sm w-100\"><i class=\"fas fa-volume-down text-danger\"></i></a>";
+							
+							
 								}
 
 							if (dial_method == "INBOUND_MAN")
@@ -12214,16 +12243,21 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								}
 
 
-							document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
-
-							if (enable_second_webform > 0)
+							//document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
+	document.getElementById("WebFormSpan").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH();\" onclick=\"webform_click_log('webform1');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form"); ?></a>";
+                   
+						if (enable_second_webform > 0)
 								{
-								document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
-								}
+								//document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
+								document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH();\" onclick=\"webform_click_log('webform2');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 2"); ?></a>";
+                    
+							    }
 							if (enable_third_webform > 0)
 								{
-								document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
-								}
+								//document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
+								document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH();\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 3"); ?></a>";
+                    
+							    }
 
 							if ( (LIVE_campaign_recording == 'ALLCALLS') || (LIVE_campaign_recording == 'ALLFORCE') )
 								{all_record = 'YES';}
@@ -12394,12 +12428,16 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 		if (taskrefresh == 'OUT')
 			{
-            document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH('IN');\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
-			}
+            //document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH('IN');\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
+			document.getElementById("WebFormSpan").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormRefresH('IN');\" onclick=\"webform_click_log('webform1');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form"); ?></a>";
+                
+		    }
 		else 
 			{
-            document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOut=\"WebFormRefresH('OUT');\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
-			}
+            //document.getElementById("WebFormSpan").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOut=\"WebFormRefresH('OUT');\" onclick=\"webform_click_log('webform1');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform.gif"); ?>\" border=\"0\" alt=\"Web Form\" /></a>\n";
+			document.getElementById("WebFormSpan").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address + "\" target=\"" + web_form_target + "\" onMouseOut=\"WebFormRefresH('OUT');\" onclick=\"webform_click_log('webform1');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form"); ?></a>";
+                
+		    }
 		}
 
 
@@ -12438,15 +12476,20 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			{
 			if (taskrefresh == 'OUT')
 				{
-                document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH('IN');\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
-				}
+                //document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH('IN');\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
+				 document.getElementById("WebFormSpanTwo").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormTwoRefresH('IN');\" onclick=\"webform_click_log('webform2');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 2"); ?></a>";
+                   
+			    }
 			else 
 				{
-                document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOut=\"WebFormTwoRefresH('OUT');\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
-				}
+                //document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOut=\"WebFormTwoRefresH('OUT');\" onclick=\"webform_click_log('webform2');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" /></a>\n";
+				document.getElementById("WebFormSpanTwo").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_two + "\" target=\"" + web_form_target + "\" onMouseOut=\"WebFormTwoRefresH('OUT');\" onclick=\"webform_click_log('webform2');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 2"); ?></a>";
+                    
+			    }
 			}
 		}
 
+                    
 
 // ################################################################################
 // refresh the content of the third web form URL
@@ -12483,16 +12526,26 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			{
 			if (taskrefresh == 'OUT')
 				{
-                document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH('IN');\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
-				}
+               /// document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH('IN');\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
+			document.getElementById("WebFormSpanThree").innerHTML = "<a  href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOver=\"WebFormThreeRefresH('IN');\" onclick=\"webform_click_log('webform3');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 3"); ?></a>";
+                    
+			    }
 			else 
 				{
-                document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOut=\"WebFormThreeRefresH('OUT');\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
-				}
+                //document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOut=\"WebFormThreeRefresH('OUT');\" onclick=\"webform_click_log('webform3');\"><img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" /></a>\n";
+				document.getElementById("WebFormSpanThree").innerHTML = "<a href=\"" + TEMP_VDIC_web_form_address_three + "\" target=\"" + web_form_target + "\" onMouseOut=\"WebFormThreeRefresH('OUT');\" onclick=\"webform_click_log('webform3');\" class=\"btn btn-primary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 3"); ?></a>";
+                
+			    }
 			}
 		}
 
 
+			
+			
+			
+			
+				
+				
 // ################################################################################
 // Send hangup a second time from the dispo screen 
 	function DispoHanguPAgaiN() 
@@ -12937,15 +12990,23 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 					//document.images['livecall'].src = image_livecall_OFF.src;
 				document.getElementById("livecall").innerHTML =image_livecall_OFF;
 				}
-				document.getElementById("WebFormSpan").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form\" />";
+				//document.getElementById("WebFormSpan").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form\" />";
+				document.getElementById("WebFormSpan").innerHTML ="<a class=\"btn btn-secondary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form"); ?></a>";
+                    
+				       
+				
 				if (enable_second_webform > 0)
 					{
-					document.getElementById("WebFormSpanTwo").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" />";
-					}
+					///document.getElementById("WebFormSpanTwo").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" />";
+					document.getElementById("WebFormSpanTwo").innerHTML = "<a class=\"btn btn-secondary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 2"); ?></a>";
+                    
+				    }
 				if (enable_third_webform > 0)
 					{
-					document.getElementById("WebFormSpanThree").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" />";
-					}
+					//document.getElementById("WebFormSpanThree").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" />";
+					document.getElementById("WebFormSpanThree").innerHTML = "<a class=\"btn btn-secondary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 3"); ?></a>";
+                    
+				    }
 				//document.getElementById("ParkControl").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_parkcall_OFF.gif"); ?>\" border=\"0\" alt=\"Park Call\" />";
 				document.getElementById("ParkControl").innerHTML ="<a  class=\"btn btn-secondary w-100\"><i class=\"fas fa-parking me-1\"></i><br><small><?php echo _QXZ("Park Call"); ?></small></a>";
 						
@@ -12969,8 +13030,12 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				document.getElementById("LocalCloser").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_XB_localcloser_OFF.gif"); ?>\" border=\"0\" alt=\"LOCAL CLOSER\" style=\"vertical-align:middle\" />";
 				document.getElementById("DialBlindTransfer").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_XB_blindtransfer_OFF.gif"); ?>\" border=\"0\" alt=\"Dial Blind Transfer\" style=\"vertical-align:middle\" />";
 				document.getElementById("DialBlindVMail").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_XB_ammessage_OFF.gif"); ?>\" border=\"0\" alt=\"Blind Transfer VMail Message\" style=\"vertical-align:middle\" />";
-				document.getElementById("VolumeUpSpan").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_volume_up_off.gif"); ?>\" border=\"0\" />";
-				document.getElementById("VolumeDownSpan").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_volume_down_off.gif"); ?>\" border=\"0\" />";
+				//document.getElementById("VolumeUpSpan").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_volume_up_off.gif"); ?>\" border=\"0\" />";
+				//document.getElementById("VolumeDownSpan").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_volume_down_off.gif"); ?>\" border=\"0\" />";
+				document.getElementById("VolumeUpSpan").innerHTML ="<a class=\"btn btn-secondary btn-sm w-100\"><i class=\"fas fa-volume-up\"></i></a>";
+				document.getElementById("VolumeDownSpan").innerHTML = "<a class=\"btn btn-secondary btn-sm w-100\"><i class=\"fas fa-volume-down\"></i></a>";
+				
+		
 
 				if (quick_transfer_button_enabled > 0)
 					{
@@ -13062,8 +13127,8 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 									alt_dial_active=0;
 									alt_dial_status_display = 0;
 
-									document.getElementById("MainStatuSSpan").style.background = panel_bgcolor;
-									document.getElementById("MainStatuSSpan").innerHTML = '';
+										// Kapatldı document.getElementById("MainStatuSSpan").style.background = panel_bgcolor;
+										// Kapatldı document.getElementById("MainStatuSSpan").innerHTML = '';
 									if (dial_method == "INBOUND_MAN")
 										{
 										document.getElementById("DiaLControl").innerHTML = "<a  class=\"btn btn-secondary w-100 mb-2\" default ><i class=\"fas fa-phone me-1\"></i><br style=\"transition: 0.3s;\"> <?php echo _QXZ("!") ?></a><br /><a  class=\"btn btn-secondary w-100 mb-2\" default ><i class=\"fas fa-phone me-1\"></i> <?php echo _QXZ("Next") ?></a>";
@@ -13080,7 +13145,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						}
 					else
 						{
-						document.getElementById("MainStatuSSpan").style.background = panel_bgcolor;
+							// Kapatldı document.getElementById("MainStatuSSpan").style.background = panel_bgcolor;
 						if (dial_method == "INBOUND_MAN")
 							{
 							document.getElementById("DiaLControl").innerHTML = "<a  class=\"btn btn-secondary w-100 mb-2\" default ><i class=\"fas fa-phone me-1\"></i><br style=\"transition: 0.3s;\"> <?php echo _QXZ("!") ?></a>";
@@ -13780,15 +13845,29 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 	
 			WebFormRefresH('NO','YES');
 
-            document.getElementById("WebFormSpan").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form\" />";
+            //document.getElementById("WebFormSpan").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form\" />";
+			
+			document.getElementById("WebFormSpan").innerHTML = "<a class=\"btn btn-secondary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form"); ?></a>";
+		
 			if (enable_second_webform > 0)
 				{
-                document.getElementById("WebFormSpanTwo").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" />";
-				}
+                //document.getElementById("WebFormSpanTwo").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_two_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form 2\" />";
+				   document.getElementById("WebFormSpanTwo").innerHTML = "<a class=\"btn btn-secondary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 2"); ?></a>";
+                    
+				
+			    }
 			if (enable_third_webform > 0)
 				{
-                document.getElementById("WebFormSpanThree").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" />";
-				}
+                //document.getElementById("WebFormSpanThree").innerHTML = "<img src=\"./images/<?php echo _QXZ("vdc_LB_webform_three_OFF.gif"); ?>\" border=\"0\" alt=\"Web Form 3\" />";
+				
+				document.getElementById("WebFormSpanThree").innerHTML ="<a class=\"btn btn-secondary w-100 mb-2\" ><i class=\"fas fa-external-link-alt me-1\"></i><?php echo _QXZ("Web Form 3"); ?></a>";
+                    
+				
+			
+			
+			
+			
+			   }
 			window.open(TEMP_VDIC_web_form_address, web_form_target, 'toolbar=1,scrollbars=1,location=1,statusbar=1,menubar=1,resizable=1,width=640,height=450');
 
 			DispoSelect_submit();
@@ -13852,7 +13931,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				if (document.vicidial_form.DiaLAltPhonE.checked==true)
 					{
 					var man_status = ""; 
-					document.getElementById("MainStatuSSpan").innerHTML = man_status;
+					// Kapatldı document.getElementById("MainStatuSSpan").innerHTML = man_status;
 					alt_dial_status_display = 0;
 					}
 				document.getElementById("CusTInfOSpaN").innerHTML = "";
@@ -16579,7 +16658,9 @@ function phone_number_format(formatphone) {
 			if (AVlocation=='AgentViewSpan')
 				{
 				button_click_log = button_click_log + "" + SQLdate + "-----AgentsViewOpen---" + AVlocation + " " + AVoperation + "|";
-				document.getElementById("AgentViewLink").innerHTML = "<a href=\"#\" onclick=\"AgentsViewOpen('AgentViewSpan','close');return false;\"><?php echo _QXZ("Agents View"); ?> -</a>";
+				//document.getElementById("AgentViewLink").innerHTML = "<a href=\"#\" onclick=\"AgentsViewOpen('AgentViewSpan','close');return false;\"><?php echo _QXZ("Agents View"); ?> -</a>";
+				document.getElementById("AgentViewLink").innerHTML = "<a href=\"#\" onclick=\"AgentsViewOpen('AgentViewSpan','close');return false;\" class=\"btn btn-warning w-100\"><i class=\"fas fa-users me-2\"></i><?php echo _QXZ("Agents View -"); ?></a>";
+
 				agent_status_view_active=1;
 				}
 			showDiv(AVlocation);
@@ -16589,7 +16670,10 @@ function phone_number_format(formatphone) {
 			if (AVlocation=='AgentViewSpan')
 				{
 				button_click_log = button_click_log + "" + SQLdate + "-----AgentsViewOpen---" + AVlocation + " " + AVoperation + "|";
-				document.getElementById("AgentViewLink").innerHTML = "<a href=\"#\" onclick=\"AgentsViewOpen('AgentViewSpan','open');return false;\"><?php echo _QXZ("Agents View"); ?> +</a>";
+				//document.getElementById("AgentViewLink").innerHTML = "<a href=\"#\" onclick=\"AgentsViewOpen('AgentViewSpan','open');return false;\"><?php echo _QXZ("Agents View"); ?> +</a>";
+				document.getElementById("AgentViewLink").innerHTML = "<a href=\"#\" onclick=\"AgentsViewOpen('AgentViewSpan','open');return false;\" class=\"btn btn-info w-100\"><i class=\"fas fa-users me-2\"></i><?php echo _QXZ("Agents View +"); ?></a>";
+
+				
 				agent_status_view_active=0;
 				}
 			hideDiv(AVlocation);
@@ -18053,7 +18137,7 @@ function phone_number_format(formatphone) {
 							
 
 
-						document.getElementById("MainStatuSSpan").innerHTML = "<?php echo _QXZ("Dial Next Call"); ?>";
+						// Kapatıldı document.getElementById("MainStatuSSpan").innerHTML = "<?php // echo _QXZ("Dial Next Call"); ?>";  
 						}
 					else
 						{
@@ -21649,7 +21733,7 @@ $zi=2;
 
                     <!-- Next Call Pause -->
                     <span id="NexTCalLPausE" class="d-block mb-3">
-                        <a href="#" class="btn btn-outline-primary w-100" onclick="next_call_pause_click();return false;">
+                        <a href="#" class="btn btn-primary w-100" onclick="next_call_pause_click();return false;">
                             <i class="fas fa-pause me-1"></i><?php echo _QXZ("Next Call Pause"); ?>
                         </a>
                     </span>
@@ -21707,14 +21791,16 @@ $zi=2;
                     <!-- Volume Controls -->
                     <div class="row g-2" id="VolumeControlSpan">
                         <div class="col-6" id="VolumeUpSpan">
-                            <button class="btn btn-outline-primary btn-sm w-100" onclick="modernVolumeUp()">
+                            <a class="btn btn-secondary btn-sm w-100">
                                 <i class="fas fa-volume-up"></i>
-                            </button>
+							</a>
+
+
                         </div>
                         <div class="col-6" id="VolumeDownSpan">
-                            <button class="btn btn-outline-primary btn-sm w-100" onclick="modernVolumeDown()">
+                            <a class="btn btn-secondary btn-sm w-100">
                                 <i class="fas fa-volume-down"></i>
-                            </button>
+							</a>
                         </div>
                     </div>
                     
@@ -21745,20 +21831,27 @@ $zi=2;
                     <h6 class="mb-0"><i class="fas fa-external-link-alt me-2"></i>Forms</h6>
                 </div>
                 <div class="card-body">
-                    <button class="btn btn-primary w-100 mb-2" id="WebFormSpan">
-                        <i class="fas fa-external-link-alt me-1"></i>Web Form
-                    </button>
-                    
+                     <span id="WebFormSpan"><a class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-external-link-alt me-1"></i><?php echo _QXZ("Web Form"); ?>
+					</a></span>
+
+				
                     <?php if ($enable_second_webform > 0) { ?>
-                    <button class="btn btn-primary w-100 mb-2" id="WebFormSpanTwo">
-                        <i class="fas fa-external-link-alt me-1"></i>Web Form 2
-                    </button>
+                    <span id="WebFormSpanTwo"><a class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-external-link-alt me-1"></i><?php echo _QXZ("Web Form 2"); ?>
+					</a></span>
+
+				
+
+
                     <?php } ?>
 
                     <?php if ($enable_third_webform > 0) { ?>
-                    <button class="btn btn-primary w-100 mb-2" id="WebFormSpanThree">
-                        <i class="fas fa-external-link-alt me-1"></i>Web Form 3
-                    </button>
+                    <span id="WebFormSpanThree"><a class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-external-link-alt me-1"></i><?php echo _QXZ("Web Form 3"); ?>
+					</a></span>
+
+					
                     <?php } ?>
 
                     <!-- Park Counter -->
@@ -21884,8 +21977,8 @@ $zi=2;
                         <div class="col-md-8">
                             <h5 class="mb-0">
                                 <i class="fas fa-tachometer-alt me-2 text-primary"></i>
-                                STATUS: <span id="MainStatuSSpaN" class="text-success fw-bold">READY</span>
-								
+                                STATUS: <span id="mdrnMainStatuSSpaN" class="text-success fw-bold">READY</span>
+								<span id="MainStatuSSpaN" ></span>
                                 <span id="timer_alt_display"></span>
                                 <span id="manual_auto_next_display"></span>
                             </h5>
@@ -21894,7 +21987,7 @@ $zi=2;
                         <div class="col-md-4 text-end">
                             <div class="d-flex gap-2 flex-wrap justify-content-end">
                                 <span id="MainCommit">
-                                    <a href="#" onclick="modernCustomerDataUpdate()" class="btn btn-outline-primary btn-sm">
+                                    <a href="#" onclick="modernCustomerDataUpdate()" class="btn btn-primary btn-sm">
                                         <i class="fas fa-save me-1"></i><?php echo _QXZ("commit"); ?>
                                     </a>
                                 </span>
@@ -21960,6 +22053,8 @@ $zi=2;
                                     <a href="#" onclick="AgentsViewOpen('AgentViewSpan','open');return false;" class="btn btn-info w-100">
                                         <i class="fas fa-users me-2"></i><?php echo _QXZ("Agents View +"); ?>
                                     </a>
+
+
                                 </span>
                             </span>
                         </div>
@@ -22285,7 +22380,7 @@ $zi=2;
                             <textarea class="form-control" name="comments" id="comments" rows="3" placeholder="Enter call comments..."></textarea>
                             <div class="mt-2">
                                 <span id="viewcommentsdisplay">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="ViewComments('ON','','','YES')">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="ViewComments('ON','','','YES')">
                                         <i class="fas fa-history me-1"></i><?php echo _QXZ("History"); ?>
                                     </button>
                                 </span>
@@ -22331,7 +22426,7 @@ $zi=2;
                                 </button>
                             </div>
                             <div class="col-md-6">
-                                <button type="button" class="btn btn-outline-secondary w-100" onclick="modernClearForm()">
+                                <button type="button" class="btn btn-secondary w-100" onclick="modernClearForm()">
                                     <i class="fas fa-broom me-2"></i>Clear Form
                                 </button>
                             </div>
@@ -22805,7 +22900,7 @@ function modernClearForm() {
 // Enhanced status update function
 function updateModernStatus(status, color = 'success') {
 	
-    const statusSpan = document.getElementById('MainStatuSSpaN');
+    const statusSpan = document.getElementById('mdrnMainStatuSSpaN');
     if (statusSpan) {
         statusSpan.innerHTML = status;
         statusSpan.className = `text-${color} fw-bold`;
@@ -24479,7 +24574,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	const buttons = document.querySelectorAll("input[type=button], input[type=submit], button");
 	buttons.forEach(button => {
 		if (!button.classList.contains("btn")) {
-			button.classList.add("btn", "btn-outline-primary");
+			button.classList.add("btn", "btn-primary");
 		}
 	});
 	
