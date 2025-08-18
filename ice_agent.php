@@ -13406,7 +13406,178 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 // ################################################################################
 // Generate the Call Disposition Chooser panel
+	// Generate the Call Disposition Chooser panel
+		// Generate the Call Disposition Chooser panel
 	function DispoSelectContent_create(taskDSgrp,taskDSstage,DSCclick)
+		{
+			var ibuton='';
+			//hideDiv('adminkontrol');
+		if (DSCclick=='YES')
+			{button_click_log = button_click_log + "" + SQLdate + "-----DispoSelectContent_create---" + taskDSgrp + " " + taskDSstage + "|";}
+		
+		//document.getElementById("kilitkontrol").innerHTML ='<i class="fa fa-unlock fa-2x" aria-hidden="true" style="color:#00FF00;"></i>';
+		if (disable_dispo_screen > 0)
+			{
+			document.vicidial_form.DispoSelection.value = disable_dispo_status;
+			DispoSelect_submit();
+			}
+		else
+			{
+			if (customer_3way_hangup_dispo_message.length > 1)
+				{
+				document.getElementById("Dispo3wayMessage").innerHTML = "<br /><b><font color=\"red\" size=\"3\">" + customer_3way_hangup_dispo_message + "</font></b><br />";
+				}
+			if (APIManualDialQueue > 0)
+				{
+				document.getElementById("DispoManualQueueMessage").innerHTML = "<br /><b><font color=\"red\" size=\"3\"><?php echo _QXZ("Warteschlangenanrufe für manuelle Wahl:"); ?> " + APIManualDialQueue + "</font></b><br />";
+				}
+			if ( (per_call_notes == 'ENABLED') && (comments_dispo_screen != 'REPLACE_CALL_NOTES') )
+				{
+				var test_notes = document.vicidial_form.call_notes_dispo.value;
+				if (test_notes.length > 0)
+					{document.vicidial_form.call_notes.value = document.vicidial_form.call_notes_dispo.value}
+				document.getElementById("PerCallNotesContent").innerHTML = "<br /><b><font size=\"3\"><?php echo _QXZ("Notizen aufrufen:"); ?> </font></b><br /><textarea name=\"call_notes_dispo\" id=\"call_notes_dispo\" rows=\"2\" cols=\"100\" class=\"cust_form_text\" value=\"\">" + document.vicidial_form.call_notes.value + "</textarea>";
+				}
+			else
+				{
+				var test_notes = document.vicidial_form.call_notes_dispo.value;
+				if (test_notes.length > 0)
+					{document.vicidial_form.call_notes.value = document.vicidial_form.call_notes_dispo.value}
+				document.getElementById("PerCallNotesContent").innerHTML = "<input type=\"hidden\" name=\"call_notes_dispo\" id=\"call_notes_dispo\" value=\"" + document.vicidial_form.call_notes.value + "\" />";
+				}
+
+			if ( (comments_dispo_screen == 'ENABLED') || (comments_dispo_screen == 'REPLACE_CALL_NOTES') )
+				{
+				var test_commmentsD = document.vicidial_form.dispo_comments.value;
+				if (test_commmentsD.length > 0)
+					{document.vicidial_form.comments.value = document.vicidial_form.dispo_comments.value;}
+
+				var dispo_comment_output = "<table cellspacing=4 cellpadding=0><tr><td align=\"right\"><font class=\"body_text\"><?php echo $label_comments ?>: <br><span id='dispoviewcommentsdisplay'><input type='button' id='DispoViewCommentButton' onClick=\"ViewComments('ON','','dispo','YES')\" value='-<?php _QXZ("Geschichte"); ?>-'/></span></font></td><td align=\"left\"><font class=\"body_text\">";
+				dispo_comment_output = dispo_comment_output + "<textarea name=\"dispo_comments\" id=\"dispo_comments\" rows=\"2\" cols=\"100\" class=\"cust_form_text\" value=\"\">" + document.vicidial_form.comments.value + "</textarea>\n";
+				dispo_comment_output = dispo_comment_output + "</td></tr></table>\n";
+				document.getElementById("DispoCommentsContent").innerHTML = dispo_comment_output;
+				}
+			else
+				{
+				document.getElementById("DispoCommentsContent").innerHTML = "<input type=\"hidden\" name=\"dispo_comments\" id=\"dispo_comments\" value=\"\" />";
+				}
+
+			HidEGenDerPulldown();
+			AgentDispoing = 1;
+			var CBflag = '';
+			var MINMAXbegin='';
+			var MINMAXend='';
+			var VD_statuses_ct_onethird = parseInt(VARSELstatuses_ct / 3);
+			var VD_statuses_ct_twothird = (VD_statuses_ct_onethird * 2);
+			dispo_HTML ='<table cellpadding=\"5\" cellspacing=\"5\" width=\"100%\"><tr><td colspan=\"3\"><b> <?php echo _QXZ("ANRUFBEDINGUNGEN"); ?></b></td></tr><tr><td bgcolor=\"#FFFFFF\"  width=\"33%\" valign=\"top\"><font class=\"log_text\">';
+			var dispo_HTML =  dispo_HTML+"<span id=\"DispoSelectA\">";
+			var loop_ct = 0;
+			var print_ct = 0;
+			if (hide_dispo_list < 1)
+				{
+				while (loop_ct < VD_statuses_ct)
+					{
+					if (VARSELstatuses[loop_ct] == 'Y')
+						{
+						CBflag = '';
+						if (VARCBstatuses[loop_ct] == 'Y')
+							{CBflag = '*';}
+						// check for minimum and maximum customer talk seconds to see if status is non-selectable
+						if ( ( (VARMINstatuses[loop_ct] > 0) && (customer_sec < VARMINstatuses[loop_ct]) ) || ( (VARMAXstatuses[loop_ct] > 0) && (customer_sec > VARMAXstatuses[loop_ct]) ) )
+							{
+							dispo_HTML += dispo_HTML + '<DEL>' + VARstatuses[loop_ct] + " - " + VARstatusnames[loop_ct] + "</DEL> " + CBflag + "<br /><br />";
+							}
+						else
+							{
+
+
+								ibuton='';
+								if(VARstatuses[loop_ct]=='SALE'){ibuton='background-color:#28a745; color:#FFFFFF;';}
+								else if(VARstatuses[loop_ct]=='CALLBK'){ibuton='background-color:#ffc107; color:#FFFFFF;';}			
+								else if(VARstatuses[loop_ct]=='NI'){ibuton='background-color:#800000; color:#FFFFFF;';}
+								else{
+									ibuton='color:#000000;';
+								}
+								
+								
+								
+							if (taskDSgrp == VARstatuses[loop_ct]) 
+								{
+							dispo_HTML = dispo_HTML + "<font size=\"10\" face=\"Arial, Helvetica, sans-serif\" ><b><a href=\"#\" onclick=\"DispoSelect_submit('','','YES');return false;\" class=\"btn btn-danger mb-1\" style=\"color:#FFFFFF; font-weight:bold; width:280px;\">" +  VARstatusnames[loop_ct] + " </a> " + CBflag + "</b></font>";
+								//VARstatuses[loop_ct] + " - " +
+							
+								}
+							else
+								{
+							
+							dispo_HTML = dispo_HTML + "<font size=\"8\" face=\"Arial, Helvetica, sans-serif\"><a href=\"#\" onclick=\"DispoSelectContent_create('" + VARstatuses[loop_ct] + "','ADD','YES');return false;\"  class=\"btn btn-primary mb-1\" style=\""+ibuton+"; font-weight:bold; width:280px;\">"+ VARstatusnames[loop_ct] + " </a></font> " + CBflag + "";
+								//VARstatuses[loop_ct] + " - " + 
+								}
+							}
+
+
+
+
+								
+								/*
+								if(VARstatuses[loop_ct]=='SALE'){ibuton='#28a745';}
+								else if(VARstatuses[loop_ct]=='CALLBK'){ibuton='#ffc107';}			
+								else if(VARstatuses[loop_ct]=='NI'){ibuton='#dc3545';}
+								else{ibuton='#6c757d';}
+								
+								
+							if (taskDSgrp == VARstatuses[loop_ct]) 
+								{
+							dispo_HTML = dispo_HTML + "<font size=\"3\" face=\"Arial, Helvetica, sans-serif\" ><b><a href=\"#\" onclick=\"DispoSelect_submit('','','YES');return false;\" class=\"btn-ass-secim bg-primary\">" +  VARstatusnames[loop_ct] + " </a> " + CBflag + "</b></font>";
+								//VARstatuses[loop_ct] + " - " +
+							
+								}
+							else
+								{
+							
+							dispo_HTML = dispo_HTML + "<font size=\"2\" face=\"Arial, Helvetica, sans-serif\"><a href=\"#\" onclick=\"DispoSelectContent_create('" + VARstatuses[loop_ct] + "','ADD','YES');return false;\" onMouseOver=\"this.style.backgroundColor = '#FFFFCC'\" onMouseOut=\"this.style.backgroundColor = '"+ibuton+"'\" class=\"btn-ass-sec \" style=\"background-color:"+ibuton+"\">"+ VARstatusnames[loop_ct] + " </a></font> " + CBflag + "";
+								//VARstatuses[loop_ct] + " - " + 
+								}
+							}*/
+						if (print_ct == VD_statuses_ct_onethird) 
+							{
+								dispo_HTML = dispo_HTML + "</span></td><td bgcolor=\"#FFFFFF\"  width=\"33%\" valign=\"top\"><span id=\"DispoSelectB\">";
+							}
+					if (print_ct == VD_statuses_ct_twothird) 
+							{
+								dispo_HTML = dispo_HTML + "</span></td><td bgcolor=\"#FFFFFF\" width=\"33%\" valign=\"top\"><span id=\"DispoSelectC\">";
+							}
+						print_ct++;
+						}
+					loop_ct++;
+					}
+				}
+			else
+				{
+				dispo_HTML = dispo_HTML + "<?php echo _QXZ("Anrufbeendigungsoptionen ausblenden"); ?><br /><br />";
+				}
+			dispo_HTML = dispo_HTML + "</font></td></tr></table>";//</span>
+
+			if (taskDSstage == 'ReSET') {document.vicidial_form.DispoSelection.value = '';}
+			else {document.vicidial_form.DispoSelection.value = taskDSgrp;}
+			
+			document.getElementById("DispoSelectContent").innerHTML = dispo_HTML;
+			if (focus_blur_enabled==1)
+				{
+				document.inert_form.inert_button.focus();
+				document.inert_form.inert_button.blur();
+				}
+			if (my_callback_option == 'CHECKED')
+				{document.vicidial_form.CallBackOnlyMe.checked=true;}
+			}
+			//buguncagridurumum();			 			 
+				 
+	//satisdurumum();	
+		}
+
+/*  eski 
+
+function DispoSelectContent_create(taskDSgrp,taskDSstage,DSCclick)
 		{
 		if (DSCclick=='YES')
 			{button_click_log = button_click_log + "" + SQLdate + "-----DispoSelectContent_create---" + taskDSgrp + " " + taskDSstage + "|";}
@@ -13519,7 +13690,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 				{document.vicidial_form.CallBackOnlyMe.checked=true;}
 			}
 		}
-
+*/
 // ################################################################################
 // Generate the Pause Code Chooser panel
 	function PauseCodeSelectContent_create(PCSclick)
@@ -16829,8 +17000,10 @@ function phone_number_format(formatphone) {
 
 // ################################################################################
 // Refresh the call log display
-	function VieWCalLLoG(logdate,formdate)
+	function VieWCalLLoG()
 		{
+			var logdate='<?php echo date("Y-m-d"); ?>';
+			var formdate='<?php echo date("Y-m-d"); ?>';
 		button_click_log = button_click_log + "" + SQLdate + "-----VieWCalLLoG---" + logdate + " " + formdate + "|";
 		var move_on=1;
 		if ( (AutoDialWaiting == 1) || (VD_live_customer_call==1) || (alt_dial_active==1) || (MD_channel_look==1) || (in_lead_preview_state==1) )
@@ -18036,7 +18209,7 @@ function phone_number_format(formatphone) {
 				}
 			if ( (VtigeRLogiNScripT == 'Y') && (VtigeREnableD > 0) )
 				{
-				document.getElementById("ScriptContents").innerHTML = "<iframe src=\"" + VtigeRurl + "/index.php?module=Users&action=Authenticate&return_module=Users&return_action=Login&user_name=" + user + "&user_password=" + orig_pass + "&login_theme=softed&login_language=en_us\" style=\"background-color:transparent;z-index:17;\" scrolling=\"auto\" frameborder=\"0\" allowtransparency=\"true\" id=\"popupFrame\" name=\"popupFrame\" width=\"" + script_width + "px\" height=\"" + script_height + "px\"> </iframe> ";
+				document.getElementById("ScriptContents").innerHTML = "<iframe src=\"" + VtigeRurl + "/index.php?module=Users&action=Authenticate&return_module=Users&return_action=Login&user_name=" + user + "&user_password=" + orig_pass + "&login_theme=softed&login_language=en_us\" style=\"background-color:transparent;z-index:17;\" scrolling=\"auto\" frameborder=\"0\" allowtransparency=\"true\" id=\"popupFrame\" name=\"popupFrame\" width=\"100%\" height=\"" + script_height + "px\"> </iframe> ";
 				}
 			if ( (VtigeRLogiNScripT == 'NEW_WINDOW') && (VtigeREnableD > 0) )
 				{
@@ -19112,7 +19285,7 @@ function phone_number_format(formatphone) {
 		showDiv('MainPanel');
 		showDiv('MainCommit');
 		ShoWGenDerPulldown();
-
+tabSekme('mainbtn');
 		if (resumevar != 'NO')
 			{
 			if (alt_phone_dialing == 1)
@@ -19190,6 +19363,7 @@ function phone_number_format(formatphone) {
 		hideDiv('CustomerChatRefresH');
 		hideDiv('InternalChatPanel');
 		hideDiv('customerPanel');
+		tabSekme('scriptbtn');
 		//document.getElementById("MainTable").style.backgroundColor="<?php echo $SCRIPT_COLOR ?>";
 		//document.getElementById("MaiNfooter").style.backgroundColor="<?php echo $SCRIPT_COLOR ?>";
 		panel_bgcolor='<?php echo $SCRIPT_COLOR ?>';
@@ -19223,6 +19397,7 @@ function phone_number_format(formatphone) {
 		hideDiv('customerPanel');
 			hideDiv('ScriptPanel');
 		hideDiv('ScriptRefresH');
+		tabSekme('formbtn');
 		//document.getElementById("MainTable").style.backgroundColor="<?php echo $FORM_COLOR ?>";
 		//document.getElementById("MaiNfooter").style.backgroundColor="<?php echo $FORM_COLOR ?>";
 		panel_bgcolor='<?php echo $FORM_COLOR ?>';
@@ -19245,6 +19420,7 @@ function phone_number_format(formatphone) {
 		hideDiv('CustomerChatRefresH');
 		hideDiv('InternalChatPanel');
 		hideDiv('customerPanel');
+		tabSekme('emailbtn');
 		if ( (OtherTab == '0') && (comments_all_tabs == 'ENABLED') )
 			{
 			OtherTab='1';
@@ -19275,6 +19451,7 @@ function phone_number_format(formatphone) {
 		showDiv('CustomerChatRefresH');
 		hideDiv('InternalChatPanel');
 		hideDiv('customerPanel');
+		tabSekme('customerchatbtn');
 		//document.getElementById("MainTable").style.backgroundColor="<?php echo $FORM_COLOR ?>";
 		//document.getElementById("MaiNfooter").style.backgroundColor="<?php echo $FORM_COLOR ?>";
 		panel_bgcolor='<?php echo $FORM_COLOR ?>';
@@ -19298,6 +19475,7 @@ function phone_number_format(formatphone) {
 		hideDiv('CustomerChatRefresH');
 		showDiv('InternalChatPanel');
 		hideDiv('customerPanel');
+		tabSekme('internalchatbtn');
 		//document.getElementById("MainTable").style.backgroundColor="<?php echo $FORM_COLOR ?>";
 		//document.getElementById("MaiNfooter").style.backgroundColor="<?php echo $FORM_COLOR ?>";
 		panel_bgcolor='<?php echo $FORM_COLOR ?>';
@@ -19353,7 +19531,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Loading progress simulation
     startLoadingProgress();
     
-    console.log('VICIdial Modern Loading & Session boxes yüklendi.');
+    console.log('ICEdial Modern Loading & Session boxes yüklendi.');
 });
 
 // Loading progress animasyonu
@@ -19899,6 +20077,52 @@ function testModernLogout() {
 
 console.log('🚪 ICEdial Modern Logout System loaded');
 console.log('📝 Test command: testModernLogout()');
+
+ function tabSekme(Id) {
+  // Sekme bağlantılarını seç (nav-tabs sınıfı altındaki nav-link'leri varsayarak)
+  const tabLinks = document.querySelectorAll('.nav-tabs .nav-link');
+
+ 
+	if(Id!='')
+	{
+ tabLinks.forEach(link => {
+ event.preventDefault(); // Varsayılan davranışı engelle (eğer href varsa)
+
+      // Tüm sekme bağlantılarından 'active' sınıfını kaldır
+      tabLinks.forEach(l => l.classList.remove('active'));
+ 		const Panellink = document.getElementById(Id);
+		  Panellink.classList.add('active');
+     });
+	}
+	else{
+
+	
+    link.addEventListener('click', function(event) {
+      event.preventDefault(); // Varsayılan davranışı engelle (eğer href varsa)
+
+      // Tüm sekme bağlantılarından 'active' sınıfını kaldır
+      tabLinks.forEach(l => l.classList.remove('active'));
+
+      // Tıklanan bağlantıya 'active' sınıfı ekle
+      this.classList.add('active');
+
+      // Sekme içeriklerini yönet (eğer Bootstrap kullanıyorsan, tab-pane'leri gizle/göster)
+     // const targetId = this.getAttribute('href').replace('#', ''); // href="#main" gibi ise ID'yi al
+      const tabPanes = document.querySelectorAll('.tab-pane');
+      tabPanes.forEach(pane => {
+        pane.classList.remove('active', 'show'); // Bootstrap için 'show' da kaldır
+      });
+      const targetPane = document.getElementById(targetId);
+      if (targetPane) {
+        targetPane.classList.add('active', 'show');
+      }
+    });
+
+ 
+}
+}
+
+
  
 	</script>
 
@@ -20562,20 +20786,7 @@ console.log('📝 Test command: testModernLogout()');
 }
 
 /* LogouTBoxLink Modern Styling */
-#LogouTBoxLink {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border: 1px solid #cbd5e1;
-    border-radius: 15px;
-    padding: 2rem;
-    margin-top: 1.5rem;
-}
 
-#LogouTBoxLink .loading_text {
-    font-size: 1rem !important;
-    color: #334155 !important;
-    line-height: 1.6 !important;
-    margin-bottom: 1.5rem !important;
-}
 
 #LogouTBoxLink a {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
@@ -20710,6 +20921,94 @@ console.log('📝 Test command: testModernLogout()');
 #LogouTBox font {
     font-family: inherit !important;
 }
+
+ #NeWManuaLDiaLBox {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: ' . $FORM_COLOR . ';
+    border: 1px solid ' . $MAIN_COLOR . ';
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 400px; /* Daha küçük boyut */
+    max-width: 90%; /* Mobil uyumluluk için */
+    padding: 20px;
+    z-index: 1000;
+    display: none; /* Varsayılan olarak gizli */
+  }
+  #NeWManuaLDiaLBox .header {
+    background-color: ' . $SCRIPT_COLOR . ';
+    padding: 10px;
+    border-bottom: 1px solid ' . $MAIN_COLOR . ';
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+    border-radius: 8px 8px 0 0;
+  }
+  #NeWManuaLDiaLBox .body {
+    padding: 15px;
+  }
+  #NeWManuaLDiaLBox .footer {
+    background-color: ' . $SIDEBAR_COLOR . ';
+    padding: 10px;
+    border-top: 1px solid ' . $MAIN_COLOR . ';
+    text-align: right;
+    border-radius: 0 0 8px 8px;
+  }
+  #NeWManuaLDiaLBox .form-control {
+    border-color: ' . $MAIN_COLOR . ';
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  #NeWManuaLDiaLBox .btn {
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  #NeWManuaLDiaLBox .btn-primary {
+    background-color: ' . $SCRIPT_COLOR . ';
+    border-color: ' . $MAIN_COLOR . ';
+    color: #333;
+  }
+  #NeWManuaLDiaLBox .btn-primary:hover {
+    background-color: #d9d9d9; /* Hafif koyulaştırma */
+    border-color: #b3b3b3;
+  }
+  #NeWManuaLDiaLBox .btn-secondary {
+    background-color: #f0f0f0;
+    border-color: ' . $MAIN_COLOR . ';
+    color: #333;
+  }
+  #NeWManuaLDiaLBox .btn-secondary:hover {
+    background-color: #e0e0e0;
+  }
+
+
+
+
+
+ #DispoSelectBox {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: ' . $FORM_COLOR . ';
+    border: 1px solid ' . $MAIN_COLOR . ';
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 900px; /* Daha küçük boyut */
+    max-width: 90%; /* Mobil uyumluluk için */
+    padding: 20px;
+
+    display: none; /* Varsayılan olarak gizli */
+  }
+ 
+#NeWManuaLDiaLBox .btn {
+    margin:10px;
+  }
+
+
 
 <style>
 /* Modern MainPanel Redesign - ID'ler korundu, sadece görsel iyileştirmeler */
@@ -20863,6 +21162,7 @@ console.log('📝 Test command: testModernLogout()');
     border-radius: 15px !important;
     padding: 20px !important;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08) !important;
+	margin-top: 22px !important;
 }
 
 /* Customer Info Textarea */
@@ -20893,35 +21193,7 @@ console.log('📝 Test command: testModernLogout()');
     margin: 10px 0 !important;
 }
 
-/* Disposition Butonları */
-#DispoSelectBox a,
-#DispoButtonHideA a,
-#DispoButtonHideB a,
-#DispoButtonHideC a {
-    background: white !important;
-    border: 2px solid #e2e8f0 !important;
-    border-radius: 10px !important;
-    padding: 12px 20px !important;
-    text-decoration: none !important;
-    color: #334155 !important;
-    font-weight: 600 !important;
-    transition: all 0.3s ease !important;
-    display: inline-block !important;
-    min-width: 100px !important;
-    text-align: center !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
-}
 
-#DispoSelectBox a:hover,
-#DispoButtonHideA a:hover,
-#DispoButtonHideB a:hover,
-#DispoButtonHideC a:hover {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: white !important;
-    border-color: transparent !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3) !important;
-}
 
 /* Callback ve Lead Info */
 #CallBackSelectBox,
@@ -21479,6 +21751,86 @@ console.log('📝 Test command: testModernLogout()');
         }
 
 
+
+
+
+ #TransferMain {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: ' . $zi++ . ';
+    max-width: 400px;
+    width: 90%;
+    font-family: \'Inter\', -apple-system, BlinkMacSystemFont, sans-serif;
+    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: visible;
+  }
+  #TransferMain .transfer-container {
+    background: ' . $FORM_COLOR . ';
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid ' . $MAIN_COLOR . ';
+    overflow: hidden;
+  }
+  #TransferMain .header {
+    background: linear-gradient(135deg, ' . $SCRIPT_COLOR . ' 0%, ' . $SIDEBAR_COLOR . ' 100%);
+    padding: 1rem;
+    text-align: center;
+    color: #333;
+    font-weight: 700;
+    font-size: 1.3rem;
+    border-bottom: 1px solid ' . $MAIN_COLOR . ';
+  }
+  #TransferMain .body {
+    padding: 1.5rem;
+  }
+  #TransferMain .form-control {
+    border: 1px solid ' . $MAIN_COLOR . ';
+    border-radius: 5px;
+    padding: 0.5rem;
+    width: 100%;
+    font-size: 0.9rem;
+  }
+  #TransferMain .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  #TransferMain .btn-primary {
+    background: ' . $SCRIPT_COLOR . ';
+    border: 1px solid ' . $MAIN_COLOR . ';
+    color: #333;
+  }
+  #TransferMain .btn-primary:hover {
+    background: #d9d9d9;
+    border-color: #b3b3b3;
+  }
+  #TransferMain .btn-secondary {
+    background: #f0f0f0;
+    border: 1px solid ' . $MAIN_COLOR . ';
+    color: #333;
+  }
+  #TransferMain .btn-secondary:hover {
+    background: #e0e0e0;
+  }
+  /* Gizlenecek elemanlar */
+  #XfeRGrouPLisT, #LocalCloser,  #ParkXferLine, #consultative_checkbox,  #dialoverride_checkbox, #DialBlindVMail, #PresetPullDown, #ContactPullDown, #xferlength, #xferchannel, #DtMfPreSetLinks {
+    display: none;
+  }
+  @keyframes slideInUp {
+    from { transform: translate(-50%, -40%); opacity: 0; }
+    to { transform: translate(-50%, -50%); opacity: 1; }
+  }
+
+
+
+
 </style>
 </head>
 <?php
@@ -21914,37 +22266,37 @@ $zi=2;
             <!-- Tab Navigation -->
             <ul class="nav nav-tabs" id="Tabs">
                 <li class="nav-item">
-                    <a class="nav-link active" href="#" onclick="MainPanelToFront('NO','YES');">
+                    <a class="nav-link active" href="#" id="mainbtn" onclick="MainPanelToFront('NO','YES');">
                         <i class="fas fa-home me-1"></i>MAIN
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="ScriptPanelToFront('YES');">
+                    <a class="nav-link" href="#" id="scriptbtn" onclick="ScriptPanelToFront('YES');">
                         <i class="fas fa-file-alt me-1"></i>SCRIPT
                     </a>
                 </li>
                 <?php if ($custom_fields_enabled > 0) { ?>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="FormPanelToFront('YES');">
+                    <a class="nav-link" href="#" id="formbtn" onclick="FormPanelToFront('YES');">
                         <i class="fas fa-edit me-1"></i>FORM
                     </a>
                 </li>
                 <?php } ?>
                 <?php if ($email_enabled > 0) { ?>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="EmailPanelToFront('YES');">
+                    <a class="nav-link" href="#" id="emailbtn" onclick="EmailPanelToFront('YES');">
                         <i class="fas fa-envelope me-1"></i>EMAIL
                     </a>
                 </li>
                 <?php } ?>
                 <?php if ($chat_enabled > 0) { ?>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="InternalChatContentsLoad('YES');">
+                    <a class="nav-link" href="#" id="internalchatbtn" onclick="InternalChatContentsLoad('YES');">
                         <i class="fas fa-comment-dots me-1"></i>CHAT INTERNAL
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="CustomerChatPanelToFront('1', 'YES');">
+                    <a class="nav-link" href="#" id="customerchatbtn" onclick="CustomerChatPanelToFront('1', 'YES');">
                         <i class="fas fa-comment me-1"></i>CHAT CUSTOMER
                     </a>
                 </li>
@@ -22478,7 +22830,7 @@ $zi=2;
 	if ($webphone_location == 'bar')
         {echo "<img src=\"./images/"._QXZ("pixel.gif")."\" width=\"1px\" height=\"".$webphone_height."px\" /><br />\n";}
 	?>
-    <table border="0" bgcolor="<?php echo $SCRIPT_COLOR ?>" width="<?php echo $SSwidth ?>px" height="<?php echo $SSheight ?>px"><tr><td align="left" valign="top"><font class="sb_text"><div class="noscroll_script" id="FormContents"><iframe src="./vdc_form_display.php?lead_id=&list_id=&stage=WELCOME" style="background-color:transparent;" scrolling="auto" frameborder="0" allowtransparency="true" id="vcFormIFrame" name="vcFormIFrame" width="<?php echo $SDwidth ?>px" height="<?php echo $SSheight ?>px" STYLE="z-index:<?php $zi++; echo $zi ?>"> </iframe></div></font></td></tr></table>
+    <table border="0" bgcolor="<?php echo $SCRIPT_COLOR ?>" width="<?php echo $SSwidth ?>px" height="<?php echo $SSheight ?>px"><tr><td align="left" valign="top"><font class="sb_text"><div class="noscroll_script" id="FormContents"><iframe src="./vdc_form_display.php?lead_id=&list_id=&stage=WELCOME" style="background-color:transparent;" scrolling="auto" frameborder="0" allowtransparency="true" id="vcFormIFrame" name="vcFormIFrame" width="100%" height="<?php echo $SSheight ?>px" STYLE="z-index:<?php $zi++; echo $zi ?>"> </iframe></div></font></td></tr></table>
 </span>
 
 <span style="position:relative;" id="EmailPanel">
@@ -23471,7 +23823,12 @@ if ($is_webphone=='Y')
 <?php } ?>
 
 
-<span style="position:absolute;left:157px;top:<?php echo $HTheight ?>px;z-index:<?php $zi++; echo $zi ?>;" id="TransferMain">
+
+
+
+
+
+<span style="z-index:<?php $zi++; echo $zi ?>;" id="TransferMain">
     <table bgcolor="#CCCCFF" width="<?php echo $SDwidth ?>px">
     <tr valign="top">
     <td align="left" height="30px">
@@ -23586,7 +23943,7 @@ if ($is_webphone=='Y')
 	</span>
 	</td>
     </tr></table>
-</span>
+</span>  
 
 <span style="position:absolute;left:0px;top:0px;width:<?php echo $JS_browser_width ?>px;height:<?php echo $JS_browser_height ?>px;overflow:scroll;z-index:<?php $zi++; echo $zi ?>;background-color:<?php echo $SIDEBAR_COLOR ?>;" id="AgentXferViewSpan"><center><font class="body_text">
 <?php echo _QXZ("Available Agents Transfer:"); ?> <span id="AgentXferViewSelect"></span></font><br><a href="#" onclick="AgentsXferSelect('0','AgentXferViewSelect');return false;"><?php echo _QXZ("close"); ?></a></center></span>
@@ -23851,16 +24208,27 @@ echo '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)
     </td></tr></table>
 </span>
 
-<span style="position:absolute;top:50%;left:50%; z-index:<?php $zi++; echo $zi ?>;" id="LogouTBox">
-    <table border="0" bgcolor="#FFFFFF" width="<?php echo $JS_browser_width ?>px" height="<?php echo $JS_browser_height ?>px"><tr><td align="center"><br /><span id="LogouTProcess">
+<span style="position:fixed; top:50%;left:50%; z-index:<?php $zi++; echo $zi ?>; backgroundr:var(--gradient-bg)" id="LogouTBox">
+    <table class="margin-left:50%; margin-top:50%; transform:translate(-50%,-50%);     width: 100%; max-width: 500px;" border="0"  height="<?php echo $JS_browser_height ?>px"><tr>
+	<td align="center"><br />
+	<span id="LogouTProcess">
 	<br />
 	<br />
 	<font class="loading_text"><?php echo _QXZ("LOGOUT PROCESSING..."); ?></font>
 	<br />
 	<br />
 	&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <img src="./images/<?php echo _QXZ("agent_loading_animation.gif"); ?>" height="206px" width="206px" alt="<?php echo _QXZ("LOGOUT PROCESSING..."); ?>" />
-	</span><br /><br /><span id="LogouTBoxLink"><font class="loading_text"><?php echo _QXZ("LOGOUT"); ?></font></span></td></tr></table>
+	</span><br /><br /><span id="LogouTBoxLink"></span></td></tr></table>
 </span>
+
+
+
+
+
+
+
+
+
 
 <span style="position:absolute;left:0px;top:70px;z-index:<?php $zi++; echo $zi ?>;" id="DispoButtonHideA">
     <table border="0" bgcolor="#CCFFCC" width="165px" height="22px"><tr><td align="center" valign="top"></td></tr></table>
@@ -23874,6 +24242,91 @@ echo '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)
     <table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="47px"><tr><td align="center" valign="top"><font class="sh_text"><?php echo _QXZ("Any changes made to the customer information below at this time will not be comitted, You must change customer information before you Hangup the call."); ?></font> </td></tr></table>
 </span>
 
+
+
+
+<div class="col-md-8 offset-md-2" style="z-index:<?php $zi++; echo $zi ?>;"  id="DispoSelectBox">
+            <!-- Box Comment -->
+            <div class="card card-widget">
+              <div class="card-header bg-dark" style="height: 40px;">
+                <div class="user-block">
+               
+					<h2 class="card-header " style="font-weight: bold; font-size:10px; color:#fff;"><span id="DispoSelectPhonE"></span> Interviewergebnis</h2>
+					<span id="DispoSelectHAspan" style="display:none"><a href="#" onClick="DispoHanguPAgaiN()"><?php echo "Hangup Again"; ?></a></span><span id="DispoSelectMaxMin" style="display:none"><a href="#" onClick="DispoMinimize()"> <?php echo "minimize"; ?> </a></span>
+					
+                </div>
+                <!-- /.user-block -->
+                <div class="card-tools">
+                 
+                  <button type="button" class="btn btn-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                  </button>
+                  
+                </div>
+                <!-- /.card-tools -->
+              </div>
+              <!-- /.card-header -->
+              <div class="card-body"  id="DispoSelectContent">
+               
+				  
+              </div>
+              <!-- /.card-body -->
+              <div class="card-footer card-comments">
+                <div class="card-comment">
+                
+					  <span id="Dispo3wayMessage"></span>
+	<span id="DispoManualQueueMessage">
+	</span>
+	<span id="PerCallNotesContent">
+		<input type="hidden" name="call_notes_dispo" id="call_notes_dispo" value="" />
+	</span>
+	<span id="DispoCommentsContent">
+		<input type="hidden" name="dispo_comments" id="dispo_comments" value="" />
+	</span>
+					
+					
+                </div>
+                <!-- /.card-comment -->
+                <div class="card-comment" >
+                 <input type="hidden" name="DispoSelection" id="DispoSelection" />
+    <span style=" text-align:center; width:90%; margin-left:10px; float: left; width:100px; position: relative "><label><input type="checkbox" name="DispoSelectStop" id="DispoSelectStop" size="1" value="0" style="width:20px; height:20px; color:#F00; margin-left:5px; " /> <?php echo "BREAK"; ?></label>
+	</span>
+					
+                </div>
+                <!-- /.card-comment -->
+              </div>
+              <!-- /.card-footer -->
+              <div class="card-footer">
+               
+				  
+    <span style=" text-align:center; width:90%; margin-left:10px; float: right; width:100px; position: relative; margin-right: 10px; ">
+  <a href="#" class="btn btn-info btn-small" onClick="DispoSelectContent_create('','ReSET','YES');return false;">
+    <i class="fa fa-refresh" aria-hidden="true"></i>
+	<font style="letter-spacing: -1px;"><?php echo "zurücksetzen"; ?></font>
+    </a> 
+	</span>
+    <span style=" text-align:center; width:90%; margin-left:10px; float: right; width:100px; position: relative; margin-right: 10px; ">
+	<a href="#" class="btn btn-danger btn-small"  onClick="DispoSelect_submit('','','YES');return false;">
+	<i class="fa fa-check-square-o" aria-hidden="true"></i>
+	<font style="letter-spacing: -1px;"><?php echo "BEWERBEN"; ?></font></a>
+	</span>
+    
+    
+  <span style="display: none">
+	<a href="#" class="btn btn-default btn-small"  onClick="WeBForMDispoSelect_submit();return false;"  >
+	<i class="fa fa-globe" aria-hidden="true"></i>
+	<font style="letter-spacing: -1px;"><?php echo "WEB FORMULAR SENDEN"; ?></font></a>
+</span>
+				  
+              </div>
+              <!-- /.card-footer -->
+            </div>
+            <!-- /.card -->
+          </div>
+
+
+
+
+<!-- eski disposelectbox
 <span style="position:absolute;left:0px;top:0px;z-index:<?php $zi++; echo $zi ?>;" id="DispoSelectBox">
     <table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center" valign="top"> <font class="sd_text"><?php echo _QXZ("DISPOSITION CALL :"); ?></font><font class="sh_text"> <span id="DispoSelectPhonE"></span> &nbsp; &nbsp; &nbsp; <span id="DispoSelectHAspan"><a href="#" onclick="DispoHanguPAgaiN()"><?php echo _QXZ("Hangup Again"); ?></a></span> &nbsp; &nbsp; &nbsp; <span id="DispoSelectMaxMin"><a href="#" onclick="DispoMinimize()"> <?php echo _QXZ("minimize"); ?> </a></span></font><br />
 	<?php
@@ -23895,7 +24348,7 @@ echo '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)
     <br /><br /> &nbsp;</font>
     </td></tr></table>
 </span>
-
+-->
 <span style="position:absolute;left:0px;top:0px;z-index:<?php $zi++; echo $zi ?>;" id="CallBackSelectBox">
     <table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center" valign="top"> <font class="sd_text"><?php echo _QXZ("Select a CallBack Date :"); ?></font><span id="CallBackDatE"></span><br />
 	<?php
@@ -24040,6 +24493,43 @@ echo '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)
     </td></tr></table>
 </span>
 
+
+<span id="NeWManuaLDiaLBox" style="display: none;">
+  <div class="header">Manuel Arama</div>
+  <div class="body">
+    <form id="manualDialForm" name="vicidial_form" action="" method="post">
+      <label for="MDDiaLCodE"><?php echo _QXZ("Dial Code"); ?> :</label>
+      <input type="text" class="form-control" id="MDDiaLCodE" name="MDDiaLCodE" value="<?php echo $default_phone_code ?>" maxlength="' . $MAXphone_code . '">
+       <label for="MDPhonENumbeR"><?php echo _QXZ("Phone Number"); ?> :</label>
+      <input type="text" class="form-control" id="MDPhonENumbeR" name="MDPhonENumbeR" maxlength="' . $MAXphone_number . '">
+     <input type="hidden" name="MDType" id="MDType" value="" />
+	<input type="hidden" name="MDLeadID" id="MDLeadID" value="" />
+	<input type="hidden" name="MDLeadIDEntry" id="MDLeadIDEntry" value="" />
+	<input type="hidden" name="MDDiaLOverridE" id="MDDiaLOverridE" value="" />
+
+		<input type="hidden" name="MDPhonENumbeRHiddeN" id="MDPhonENumbeRHiddeN" value="" />
+	
+	  <input type="checkbox" name="LeadLookuP" id="LeadLookuP" size="1" value="0" style="display:none" <?php echo $LeadLookuPXtra ?>/>&nbsp; 
+	  
+	
+	  	<?php 
+	if (!preg_match("/X/i",$manual_dial_prefix))
+		{
+        echo _QXZ("Note: a dial prefix of %1s will be added to the beginning of this number",0,'',$manual_dial_prefix)."<br />\n";
+		}
+	?>
+    <?php echo _QXZ("Note: all new manual dial leads will go into list %1s",0,'',$manual_dial_list_id); ?><br /><br />
+    </form>
+  </div>
+  <div class="footer">
+    <a type="button" class="btn btn-secondary" href="#" onclick="ManualDialHide();return false;"><?php echo _QXZ("Go Back"); ?></a>
+    <a type="button" class="btn btn-primary" href="#" onclick="NeWManuaLDiaLCalLSubmiT('NOW','YES');return false;"><?php echo _QXZ("Dial Now"); ?></a>
+  </div>
+</span>
+
+
+
+<!--  eski manuel arama
 <span style="position:absolute;left:0px;top:0px;z-index:<?php $zi++; echo $zi ?>;" id="NeWManuaLDiaLBox">
     <table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center" valign="top"> <font class="sd_text"><?php echo _QXZ("NEW MANUAL DIAL LEAD FOR %1s in campaign %2s:",0,'',$VD_login,$VD_campaign); ?></font><br /><br /><font class="sh_text"><?php echo _QXZ("Enter information below for the new lead you wish to call."); ?>
  <br />
@@ -24129,7 +24619,7 @@ echo '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)
 	 ?>
 	<a href="#" onclick="ManualDialHide();return false;"><?php echo _QXZ("Go Back"); ?></a></font>
     </td></tr></table>
-</span>
+</span>-->
 
 <span style="position:absolute;left:0px;top:0px;z-index:<?php $zi++; echo $zi ?>;" id="CloserSelectBox">
     <table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center" valign="top"> <font class="sd_text"><?php echo _QXZ("CLOSER INBOUND GROUP SELECTION"); ?></font> <br />
@@ -24567,6 +25057,11 @@ echo '
 
 <!-- Modern Agent Interface Enhancements -->
 <script>
+
+
+
+
+
 document.addEventListener("DOMContentLoaded", function() {
 	// Modern UI enhancements for agent interface
 	
