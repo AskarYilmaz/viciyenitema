@@ -7581,6 +7581,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 
 // ################################################################################
 // Request list of USERONLY callbacks for this agent
+
 	function CalLBacKsLisTCheck()
 		{
 		button_click_log = button_click_log + "" + SQLdate + "-----CalLBacKsLisTCheck---|";
@@ -7605,20 +7606,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 			showDiv('CallBacKsLisTBox');
 
 			var xmlhttp=false;
-			/*@cc_on @*/
-			/*@if (@_jscript_version >= 5)
-			// JScript gives us Conditional compilation, we can cope with old IE versions.
-			// and security blocked creation of the objects.
-			 try {
-			  xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-			 } catch (e) {
-			  try {
-			   xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-			  } catch (E) {
-			   xmlhttp = false;
-			  }
-			 }
-			@end @*/
+
 			if (!xmlhttp && typeof XMLHttpRequest!='undefined')
 				{
 				xmlhttp = new XMLHttpRequest();
@@ -7641,7 +7629,7 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 						var CB_calls = all_CBs_array[0];
 						var loop_ct=0;
 						var conv_start=0;
-                        var CB_HTML = "<table width=\"<?php echo $HCwidth ?>px\"><tr bgcolor=\"<?php echo $SCRIPT_COLOR ?>\"><td><font class=\"log_title\">#</font></td><td align=\"center\"><font class=\"log_title\"> <?php echo _QXZ("CALLBACK DATE/TIME"); ?> </font></td><td align=\"center\"><font class=\"log_title\"> <?php echo _QXZ("NUMBER"); ?> </font></td><td align=\"center\"><font class=\"log_title\"> <?php echo _QXZ("INFO"); ?> </font></td><td align=\"center\"><font class=\"log_title\"> <?php echo _QXZ("FULL NAME"); ?> </font></td><td align=\"center\"><font class=\"log_title\">  <?php echo _QXZ("STATUS"); ?> </font></td><td align=\"center\"><font class=\"log_title\"> <?php echo _QXZ("CAMPAIGN"); ?> </font></td><td align=\"center\"><font class=\"log_title\"> <?php echo _QXZ("LAST CALL DATE/TIME"); ?> </font></td><td align=\"center\"><font class=\"log_title\"> <?php echo _QXZ("DIAL"); ?></font></td><td align=\"center\"><font class=\"log_title\"> <?php echo _QXZ("ALT"); ?> </font></td></tr>"
+                        var CB_HTML = "<div class=\"table-responsive\"><table class=\"table table-striped table-hover table-bordered\"><thead><tr><th>#</th><th><?php echo _QXZ("CALLBACK DATE/TIME"); ?> </th><th> <?php echo _QXZ("NUMBER"); ?> </th><th> <?php echo _QXZ("INFO"); ?> </th><th> <?php echo _QXZ("FULL NAME"); ?></th><td>  <?php echo _QXZ("STATUS"); ?> </tth><th><?php echo _QXZ("CAMPAIGN"); ?></th><th> <?php echo _QXZ("LAST CALL DATE/TIME"); ?> </th><th><?php echo _QXZ("DIAL"); ?></th><th><?php echo _QXZ("ALT"); ?> </th></tr></thead>";
 						while (loop_ct < CB_calls)
 							{
 							loop_ct++;
@@ -7674,14 +7662,14 @@ function set_length(SLnumber,SLlength_goal,SLdirection)
 								var alt_link = "<a href=\"#\" onclick=\"new_callback_call('" + CB_id + "','" + CB_lead_id + "','ALT');return false;\"><?php echo _QXZ("ALT"); ?></a>&nbsp;";
 								if (CB_alt_phone.length < 3)
 									{alt_link = "<?php echo _QXZ("ALT"); ?>&nbsp;";}
-								CB_HTML = CB_HTML + "<tr bgcolor=\"" + row_color + "\"><td><font class=\"log_text\">" + loop_ct + "</font></td><td align=\"right\"><font class=\"log_text\">" + CB_callback_time + "</td><td align=\"right\"><font class=\"log_text\">" + CB_phone + "</td><td align=\"right\"><font class=\"log_text\">" + CB_comments_ten + " - <a href=\"#\" onclick=\"VieWLeaDInfO('" + CB_lead_id + "','" + CB_id + "');return false;\"><?php echo _QXZ("INFO"); ?></a></font></td><td align=\"right\"><font class=\"log_text\">" + CB_name + "</font></td><td align=\"right\"><font class=\"log_text\">" + CB_status + "</font></td><td align=\"right\"><font class=\"log_text\">" + CB_campaign + "</font></td><td align=\"right\"><font class=\"log_text\">" + CB_lastcall_time + "&nbsp;</font></td><td align=\"right\"><font class=\"log_text\"><a href=\"#\" onclick=\"new_callback_call('" + CB_id + "','" + CB_lead_id + "','MAIN');return false;\"><?php echo _QXZ("DIAL"); ?></a>&nbsp;</font></td><td align=\"right\"><font class=\"log_text\">" + alt_link + "</font></td></tr>";
+								CB_HTML = CB_HTML + "<tbody><tr><td>" + loop_ct + "</td><td >" + CB_callback_time + "</td><td >" + CB_phone + "</td><td>" + CB_comments_ten + " - <a href=\"#\" onclick=\"VieWLeaDInfO('" + CB_lead_id + "','" + CB_id + "');return false;\" <?php echo _QXZ("INFO"); ?></a></td><td >" + CB_name + "</td><td>" + CB_status + "</td><td>" + CB_campaign + "</td><td>" + CB_lastcall_time + "&nbsp;</td><td><a href=\"#\" onclick=\"new_callback_call('" + CB_id + "','" + CB_lead_id + "','MAIN');return false;\"  class=\"btn btn-sm btn-success\"><i class=\"fa fa-phone\"></i><?php echo _QXZ("DIAL"); ?></a>&nbsp;</td><td>" + alt_link + "</td></tr>";
 								}
 							else
 								{
-								CB_HTML = CB_HTML + "<tr bgcolor=\"" + row_color + "\"><td><font class=\"log_text\">" + loop_ct + "</font></td><td align=\"right\"><font class=\"log_text\">" + CB_callback_time + "</td><td align=\"right\"><font class=\"log_text\">" + CB_phone + "</td><td align=\"right\"><font class=\"log_text\">" + CB_comments_ten + " - INFO</font></td><td align=\"right\"><font class=\"log_text\">" + CB_name + "</font></td><td align=\"right\"><font class=\"log_text\">" + CB_status + "</font></td><td align=\"right\"><font class=\"log_text\">" + CB_campaign + "</font></td><td align=\"right\"><font class=\"log_text\">" + CB_lastcall_time + "&nbsp;</font></td><td align=\"right\" colspan=2><font class=\"log_text\"><?php echo _QXZ("NON-DIALABLE"); ?>&nbsp;</font></td></tr>";
+								CB_HTML = CB_HTML + "<tbody><tr><td>" + loop_ct + "</td><td>" + CB_callback_time + "</td><td>" + CB_phone + "</td><td>" + CB_comments_ten + " - INFO</td><td>" + CB_name + "</td><td>" + CB_status + "</td><td>" + CB_campaign + "</td><td>" + CB_lastcall_time + "&nbsp;</td><td align=\"right\" colspan=2><?php echo _QXZ("NON-DIALABLE"); ?>&nbsp;</td></tr>";
 								}
 							}
-						CB_HTML = CB_HTML + "</table>";
+						CB_HTML = CB_HTML + "</tbody></table></div>";
 						document.getElementById("CallBacKsLisT").innerHTML = CB_HTML;
 						}
 					}
@@ -17000,6 +16988,8 @@ function phone_number_format(formatphone) {
 
 // ################################################################################
 // Refresh the call log display
+
+
 	function VieWCalLLoG()
 		{
 			var logdate='<?php echo date("Y-m-d"); ?>';
@@ -17054,20 +17044,7 @@ function phone_number_format(formatphone) {
 			showDiv('CalLLoGDisplaYBox');
 
 			var xmlhttp=false;
-			/*@cc_on @*/
-			/*@if (@_jscript_version >= 5)
-			// JScript gives us Conditional compilation, we can cope with old IE versions.
-			// and security blocked creation of the objects.
-			 try {
-			  xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-			 } catch (e) {
-			  try {
-			   xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-			  } catch (E) {
-			   xmlhttp = false;
-			  }
-			 }
-			@end @*/
+		
 			if (!xmlhttp && typeof XMLHttpRequest!='undefined')
 				{
 				xmlhttp = new XMLHttpRequest();
@@ -17083,7 +17060,8 @@ function phone_number_format(formatphone) {
 					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
 						{
 					//	alert(xmlhttp.responseText);
-						document.getElementById('CallLogSpan').innerHTML = xmlhttp.responseText + "\n";
+						//document.getElementById('CallLogSpan').innerHTML = xmlhttp.responseText + "\n";
+						 document.getElementById("CallLogSpan").innerHTML = xmlhttp.responseText;
 						}
 					}
 				delete xmlhttp;
@@ -21010,7 +20988,7 @@ console.log('📝 Test command: testModernLogout()');
 
 
 
-<style>
+
 /* Modern MainPanel Redesign - ID'ler korundu, sadece görsel iyileştirmeler */
 
 /* Ana Panel Modernizasyonu */
@@ -21828,6 +21806,198 @@ console.log('📝 Test command: testModernLogout()');
     to { transform: translate(-50%, -50%); opacity: 1; }
   }
 
+
+ #CalLLoGDisplaYBox {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: ' . $zi++ . ';
+    max-width: 800px;
+    width: 90%;
+    font-family: \'Inter\', -apple-system, BlinkMacSystemFont, sans-serif;
+    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: visible;
+  }
+  #CalLLoGDisplaYBox .calllog-container {
+    background: ' . $FORM_COLOR . ';
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid ' . $MAIN_COLOR . ';
+    overflow: hidden;
+  }
+  #CalLLoGDisplaYBox .header {
+    background: linear-gradient(135deg, ' . $SCRIPT_COLOR . ' 0%, ' . $SIDEBAR_COLOR . ' 100%);
+    padding: 1rem;
+    color: #333;
+    font-weight: 700;
+    font-size: 1.3rem;
+    border-bottom: 1px solid ' . $MAIN_COLOR . ';
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #CalLLoGDisplaYBox .body {
+    padding: 1.5rem;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  #CalLLoGDisplaYBox .form-control {
+    border: 1px solid ' . $MAIN_COLOR . ';
+    border-radius: 5px;
+    font-size: 0.9rem;
+    height: 30px;
+    width: 120px;
+  }
+  #CalLLoGDisplaYBox .btn-sm {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+  }
+  #CalLLoGDisplaYBox .table {
+    font-size: 0.9rem;
+  }
+  #CalLLoGDisplaYBox .table th {
+    background: ' . $MAIN_COLOR . ';
+    color: #333;
+    font-size: 0.85rem;
+  }
+  #CalLLoGDisplaYBox .table td {
+    vertical-align: middle;
+  }
+  @keyframes slideInUp {
+    from { transform: translate(-50%, -40%); opacity: 0; }
+    to { transform: translate(-50%, -50%); opacity: 1; }
+  }
+  #CallBacKsLisTBox {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: ' . $zi++ . ';
+    max-width: 700px;
+	height: 600px;
+    width: 90%;
+    font-family: \'Inter\', -apple-system, BlinkMacSystemFont, sans-serif;
+    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: visible;
+  }
+  #CallBacKsLisTBox .callback-container {
+    background: ' . $FORM_COLOR . ';
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid ' . $MAIN_COLOR . ';
+    overflow: hidden;
+  }
+  #CallBacKsLisTBox .header {
+    background: linear-gradient(135deg, ' . $SCRIPT_COLOR . ' 0%, ' . $SIDEBAR_COLOR . ' 100%);
+    padding: 1rem;
+    color: #333;
+    font-weight: 700;
+    font-size: 1.3rem;
+    border-bottom: 1px solid ' . $MAIN_COLOR . ';
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #CallBacKsLisTBox .body {
+    padding: 1.5rem;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  #CallBacKsLisTBox .form-control {
+    border: 1px solid ' . $MAIN_COLOR . ';
+    border-radius: 5px;
+    font-size: 0.9rem;
+    height: 30px;
+    width: 120px;
+  }
+  #CallBacKsLisTBox .btn-sm {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+  }
+  #CallBacKsLisTBox .table {
+    font-size: 0.9rem;
+  }
+  #CallBacKsLisTBox .table th {
+    background: ' . $MAIN_COLOR . ';
+    color: #333;
+    font-size: 0.85rem;
+  }
+  #CallBacKsLisTBox .table td {
+    vertical-align: middle;
+  }
+  @keyframes slideInUp {
+    from { transform: translate(-50%, -40%); opacity: 0; }
+    to { transform: translate(-50%, -50%); opacity: 1; }
+  }
+#AgentTimeDisplayBox {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: ' . $zi++ . ';
+    width: 500px;
+    height: 400px;
+    max-width: 90%;
+    font-family: \'Inter\', -apple-system, BlinkMacSystemFont, sans-serif;
+    animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: visible;
+  }
+  #AgentTimeDisplayBox .agenttime-container {
+    background: ' . $FORM_COLOR . ';
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid ' . $MAIN_COLOR . ';
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  #AgentTimeDisplayBox .header {
+    background: linear-gradient(135deg, ' . $SCRIPT_COLOR . ' 0%, ' . $SIDEBAR_COLOR . ' 100%);
+    padding: 1rem;
+    color: #333;
+    font-weight: 700;
+    font-size: 1.3rem;
+    border-bottom: 1px solid ' . $MAIN_COLOR . ';
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #AgentTimeDisplayBox .body {
+    padding: 1.5rem;
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  #AgentTimeDisplayBox .table {
+    font-size: 0.9rem;
+    margin-bottom: 0;
+  }
+  #AgentTimeDisplayBox .table th {
+    background: ' . $MAIN_COLOR . ';
+    color: #333;
+    font-size: 0.85rem;
+  }
+  #AgentTimeDisplayBox .table td {
+    vertical-align: middle;
+  }
+  #AgentTimeDisplayBox .btn-sm {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+  }
+ #AgentTimeDisplaySpan .table th {
+    background: ' . $MAIN_COLOR . ';
+    color: #333;
+    font-size: 0.85rem;
+	vertical-align: top;
+  }
+  #AgentTimeDisplaySpan .table td {
+    vertical-align: top;
+  }
+ 
 
 
 
@@ -24477,14 +24647,14 @@ echo '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)
     </tr></table>
 </span>
 
-<span style="position:absolute;left:0px;top:0px;z-index:<?php $zi++; echo $zi ?>;" id="CallBacKsLisTBox">
-    <table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center" valign="top"> <font class="sh_text"><?php echo _QXZ("CALLBACKS FOR AGENT %1s:<br />To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list.",0,'',$VD_login); ?></font>
+<span style="z-index:<?php $zi++; echo $zi ?>;" id="CallBacKsLisTBox">
+    <table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center" valign="top" style="vertical-align:top"> <font class="sh_text"><?php echo _QXZ("CALLBACKS FOR AGENT %1s:<br />To see information on one of the callbacks below, click on the INFO link. To call the customer back now, click on the DIAL link. If you click on a record below to dial it, it will be removed from the list.",0,'',$VD_login); ?></font>
  <br />
 	<?php
 	if ($webphone_location == 'bar')
         {echo "<br /><img src=\"./images/"._QXZ("pixel.gif")."\" width=\"1px\" height=\"".$webphone_height."px\" /><br />\n";}
 	?>
-	<div class="scroll_callback_auto" id="CallBacKsLisT"></div>
+	<div id="CallBacKsLisT"></div>
     <br /><font class="sh_text"> &nbsp;
 	<a href="#" onclick="CalLBacKsLisTCheck();return false;"><?php echo _QXZ("Refresh"); ?></a>
 	 &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp;  &nbsp; 
@@ -24492,6 +24662,10 @@ echo '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)
 	</font>
     </td></tr></table>
 </span>
+
+
+
+
 
 
 <span id="NeWManuaLDiaLBox" style="display: none;">
@@ -24670,6 +24844,54 @@ echo '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)
 	?>
 </span>
 
+
+<span style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:<?php $zi++; echo $zi ?>;" id="CalLLoGDisplaYBox">
+    <div style="
+        background: <?php echo $FORM_COLOR ?>;
+        border: 1px solid <?php echo $MAIN_COLOR ?>;
+        border-radius: 15px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        max-width: 800px;
+        width: 90%;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+    ">
+        <!-- Header -->
+        <div style="
+            background: linear-gradient(135deg, <?php echo $SCRIPT_COLOR ?> 0%, <?php echo $SIDEBAR_COLOR ?> 100%);
+            padding: 1rem;
+            text-align: center;
+            color: #333;
+            font-weight: 700;
+            font-size: 1.3rem;
+            border-bottom: 1px solid <?php echo $MAIN_COLOR ?>;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        ">
+            <?php echo _QXZ("AGENT CALL LOG:"); ?>
+            <a href="#" onclick="CalLLoGVieWClose();return false;" style="color: #333; text-decoration: none; font-size: 1rem;">
+                <?php echo _QXZ("close"); ?> [X]
+            </a>
+        </div>
+        
+        <!-- Body -->
+        <div style="padding: 1.5rem; max-height: 500px; overflow-y: auto;">
+            <div class="scroll_calllog" id="CallLogSpan">
+                <!-- Bootstrap Table buraya gelecek -->
+            </div>
+        </div>
+        
+        <?php
+        if ($webphone_location == 'bar') {
+            echo "<div style='height: " . $webphone_height . "px;'></div>";
+        }
+        ?>
+    </div>
+</span>
+
+
+<!-- eski callog
 <span style="position:absolute;left:0px;top:0px;z-index:<?php $zi++; echo $zi ?>;" id="CalLLoGDisplaYBox">
 	<table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center" valign="top"> &nbsp; &nbsp; &nbsp; <font class="sd_text"><?php echo _QXZ("AGENT CALL LOG:"); ?></font> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <font class="sh_text"><a href="#" onclick="CalLLoGVieWClose();return false;"><?php echo _QXZ("close"); ?> [X]</a><br />
 	<?php
@@ -24679,11 +24901,11 @@ echo '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)
 	<div class="scroll_calllog" id="CallLogSpan"> <?php echo _QXZ("Call log List"); ?> </div>
 	<br /><br /> &nbsp;</font>
 	</td></tr></table>
-</span>
+</span> -->
 
-<span style="position:absolute;left:0px;top:0px;z-index:<?php $zi++; echo $zi ?>;" id="AgentTimeDisplayBox">
-	<table border="0" bgcolor="#CCFFCC" width="<?php echo $CAwidth ?>px" height="<?php echo $WRheight ?>px"><tr><td align="center" valign="top"> &nbsp; &nbsp; &nbsp; <font class="sd_text"><?php echo _QXZ("AGENT TIME REPORT FOR TODAY:"); ?></font> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <font class="sh_text"><a href="#" onclick="AgentTimeReport('close');return false;"><?php echo _QXZ("close"); ?> [X]</a><br />
-	<div class="scroll_calllog" id="AgentTimeDisplaySpan"> <?php echo _QXZ("Agent Time Report"); ?> </div>
+<span style="z-index:<?php $zi++; echo $zi ?>; backcolor:var(--gradient-bg)" id="AgentTimeDisplayBox">
+	<table border="0" style="backcolor:var(--gradient-bg)" width="500px" height="200px"><tr><td align="center" valign="top"> &nbsp; &nbsp; &nbsp; <font class="sd_text"><?php echo _QXZ("AGENT TIME REPORT FOR TODAY:"); ?></font> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <font class="sh_text"><a href="#" onclick="AgentTimeReport('close');return false;"><?php echo _QXZ("close"); ?> [X]</a><br />
+	<div id="AgentTimeDisplaySpan" style="backcolor:var(--gradient-bg)"> <?php echo _QXZ("Agent Time Report"); ?> </div>
 	<br /><br /> &nbsp;</font>
 	</td></tr></table>
 </span>
