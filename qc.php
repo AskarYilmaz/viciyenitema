@@ -1,12 +1,15 @@
 <?php
-# Enhanced QC.php - VICIdial QC Panel with WebPhone Integration
-# Geliştirilmiş Kalite Kontrol Paneli - WebPhone ve gelişmiş özelliklerle
+# Enhanced QC.php - VICIdial QC Panel with ice_agent.php referanslı WebPhone
+# Session Yönetimi ve ice_agent.php'deki gibi WebPhone entegrasyonu - KISIM 1
 
-$version = '2.0-001';
-$build = '241220-2000';
+$version = '2.0-004';
+$build = '241221-0100';
 
 require_once("../agc/dbconnect_mysqli.php");
 require_once("../agc/functions.php");
+
+// SESSION YÖNETİMİ
+session_start();
 
 // Değişkenleri tanımla
 $VD_login = '';
@@ -23,13 +26,44 @@ $campaign_filter = '';
 $date_start = '';
 $date_end = '';
 
-// POST verilerini al
-if (isset($_POST["VD_login"]))      {$VD_login=$_POST["VD_login"];}
-if (isset($_POST["VD_pass"]))       {$VD_pass=$_POST["VD_pass"];}
-if (isset($_POST["phone_login"]))   {$phone_login=$_POST["phone_login"];}
-if (isset($_POST["phone_pass"]))    {$phone_pass=$_POST["phone_pass"];}
-if (isset($_POST["webphone"]))      {$webphone=$_POST["webphone"];}
-echo "<!-- DEBUG: Login=$VD_login, Pass=".substr($VD_pass,0,3)."*** -->";
+// POST verilerini al ve session'a kaydet
+if (isset($_POST["VD_login"])) {
+    $VD_login = $_POST["VD_login"];
+    $_SESSION['VD_login'] = $VD_login;
+}
+if (isset($_POST["VD_pass"])) {
+    $VD_pass = $_POST["VD_pass"];
+    $_SESSION['VD_pass'] = $VD_pass;
+}
+if (isset($_POST["phone_login"])) {
+    $phone_login = $_POST["phone_login"];
+    $_SESSION['phone_login'] = $phone_login;
+}
+if (isset($_POST["phone_pass"])) {
+    $phone_pass = $_POST["phone_pass"];
+    $_SESSION['phone_pass'] = $phone_pass;
+}
+if (isset($_POST["webphone"])) {
+    $webphone = $_POST["webphone"];
+    $_SESSION['webphone'] = $webphone;
+}
+
+// Session'dan bilgileri al (GET isteklerinde)
+if (empty($VD_login) && isset($_SESSION['VD_login'])) {
+    $VD_login = $_SESSION['VD_login'];
+}
+if (empty($VD_pass) && isset($_SESSION['VD_pass'])) {
+    $VD_pass = $_SESSION['VD_pass'];
+}
+if (empty($phone_login) && isset($_SESSION['phone_login'])) {
+    $phone_login = $_SESSION['phone_login'];
+}
+if (empty($phone_pass) && isset($_SESSION['phone_pass'])) {
+    $phone_pass = $_SESSION['phone_pass'];
+}
+if (empty($webphone) && isset($_SESSION['webphone'])) {
+    $webphone = $_SESSION['webphone'];
+}
 
 // GET verilerini al
 if (isset($_GET["action"]))         {$action=$_GET["action"];}
@@ -50,7 +84,6 @@ $phone_number = preg_replace("/[^0-9]/", "", $phone_number);
 $qc_result = preg_replace("/[^A-Z]/", "", $qc_result);
 $campaign_filter = preg_replace("/[^-_0-9a-zA-Z]/", "", $campaign_filter);
 
-
 $NOW_TIME = date("Y-m-d H:i:s");
 $StarTtimE = date("U");
 $CIDdate = date("ymdHis");
@@ -58,25 +91,34 @@ $session_name = $VD_login . '_' . $CIDdate;
 
 // Login kontrolü
 if (strlen($VD_login) < 1 || strlen($VD_pass) < 1) {
+    session_destroy();
     header("Location: ../index.php");
     exit;
 }
 
 // Kullanıcı doğrulaması
 $auth = 0;
-
 $auth_message = user_authorization($VD_login,$VD_pass,'',1,0,1,0);
-
 if (preg_match("/^GOOD/",$auth_message)) {
     $auth=1;
-
+    $_SESSION['authenticated'] = true;
+    $_SESSION['auth_time'] = time();
 }
 
 if ($auth == 0) {
-  
+    session_destroy();
     header("Location: ../index.php");
     exit;
 }
+
+// Session timeout kontrolü (30 dakika)
+if (isset($_SESSION['auth_time']) && (time() - $_SESSION['auth_time'] > 1800)) {
+    session_destroy();
+    header("Location: ../index.php?timeout=1");
+    exit;
+}
+
+$_SESSION['auth_time'] = time();
 
 // Kullanıcı bilgilerini al
 $stmt="SELECT full_name,user_level,user_group from vicidial_users where user='$VD_login' and active='Y';";
@@ -86,14 +128,15 @@ if (mysqli_num_rows($rslt) > 0) {
     $full_name = $row[0];
     $user_level = $row[1];
     $user_group = $row[2];
-
+    $allowed_campaigns = $row[3];
     
-    // QC yetkisi kontrolü (Level 7+)
     if ($user_level < 7) {
+        session_destroy();
         header("Location: ../index.php");
         exit;
     }
 } else {
+    session_destroy();
     header("Location: ../index.php");
     exit;
 }
@@ -102,60 +145,247 @@ $rslt=mysql_to_mysqli($stmt, $link);
  $row=mysqli_fetch_row($rslt);
  $allowed_campaigns = $row[0];
 
-// WebPhone ayarlarını çek
-$webphone_url = '';
-$webphone_dialpad_color = '';
-$webphone_location = 'right';
-$phone_server_ip = '';
+// User Group ayarlarını al - ice_agent.php'deki gibi
+$webphone_url_override = '';
+$webphone_dialpad_override = '';
+$system_key = '';
+$webphone_layout_override = '';
+
+$stmt="SELECT forced_timeclock_login,shift_enforcement,group_shifts,agent_status_viewable_groups,agent_status_view_time,agent_call_log_view,agent_xfer_consultative,agent_xfer_dial_override,agent_xfer_vm_transfer,agent_xfer_blind_transfer,agent_xfer_dial_with_customer,agent_xfer_park_customer_dial,agent_fullscreen,webphone_url_override,webphone_dialpad_override,webphone_systemkey_override,admin_viewable_groups,agent_xfer_park_3way,webphone_layout from vicidial_user_groups where user_group='$user_group';";
+$rslt=mysql_to_mysqli($stmt, $link);
+if (mysqli_num_rows($rslt) > 0) {
+    $row=mysqli_fetch_row($rslt);
+    $forced_timeclock_login = $row[0];
+    $shift_enforcement = $row[1];
+    $agent_fullscreen = $row[12];
+    $webphone_url_override = $row[13];
+    $webphone_dialpad_override = $row[14];
+    $system_key = $row[15];
+    $admin_viewable_groups = $row[16];
+    $webphone_layout_override = $row[18];
+}
+
+// Phone tablosu ayarlarını al - ice_agent.php'deki gibi tam
+$extension = '';
+$conf_secret = '';
+$is_webphone = 'N';
+$use_external_server_ip = 'N';
+$codecs_list = '';
+$webphone_dialpad = 'Y';
 $webphone_auto_answer = 'N';
-// Sistem ayarlarından webphone bilgilerini al
+$webphone_dialbox = 'Y';
+$webphone_mute = 'Y';
+$webphone_volume = 'Y';
+$webphone_debug = 'N';
+$webphone_layout = 'default';
+$outbound_cid = '';
+$protocol = 'SIP';
+
+$stmt="SELECT extension,dialplan_number,voicemail_id,phone_ip,computer_ip,server_ip,login,pass,status,active,phone_type,fullname,company,picture,messages,old_messages,protocol,local_gmt,ASTmgrUSERNAME,ASTmgrSECRET,login_user,login_pass,login_campaign,park_on_extension,conf_on_extension,VICIDIAL_park_on_extension,VICIDIAL_park_on_filename,monitor_prefix,recording_exten,voicemail_exten,voicemail_dump_exten,ext_context,dtmf_send_extension,call_out_number_group,client_browser,install_directory,local_web_callerID_URL,VICIDIAL_web_URL,AGI_call_logging_enabled,user_switching_enabled,conferencing_enabled,admin_hangup_enabled,admin_hijack_enabled,admin_monitor_enabled,call_parking_enabled,updater_check_enabled,AFLogging_enabled,QUEUE_ACTION_enabled,CallerID_popup_enabled,voicemail_button_enabled,enable_fast_refresh,fast_refresh_rate,enable_persistant_mysql,auto_dial_next_number,VDstop_rec_after_each_call,DBX_server,DBX_database,DBX_user,DBX_pass,DBX_port,DBY_server,DBY_database,DBY_user,DBY_pass,DBY_port,outbound_cid,enable_sipsak_messages,email,template_id,conf_override,phone_context,phone_ring_timeout,conf_secret,is_webphone,use_external_server_ip,codecs_list,webphone_dialpad,phone_ring_timeout,on_hook_agent,webphone_auto_answer,webphone_dialbox,webphone_mute,webphone_volume,webphone_debug,webphone_layout from phones where login='$phone_login' and pass='$phone_pass' and active = 'Y';";
+$rslt=mysql_to_mysqli($stmt, $link);
+if (mysqli_num_rows($rslt) > 0) {
+    $row=mysqli_fetch_row($rslt);
+    $extension = $row[0];
+    $dialplan_number = $row[1];
+    $voicemail_id = $row[2];
+    $phone_ip = $row[3];
+    $computer_ip = $row[4];
+    $server_ip = $row[5];
+    $login = $row[6];
+    $pass = $row[7];
+    $status = $row[8];
+    $active = $row[9];
+    $phone_type = $row[10];
+    $fullname = $row[11];
+    $company = $row[12];
+    $picture = $row[13];
+    $messages = $row[14];
+    $old_messages = $row[15];
+    $protocol = $row[16];
+    $local_gmt = $row[17];
+    $ASTmgrUSERNAME = $row[18];
+    $ASTmgrSECRET = $row[19];
+    $login_user = $row[20];
+    $login_pass = $row[21];
+    $login_campaign = $row[22];
+    $park_on_extension = $row[23];
+    $conf_on_extension = $row[24];
+    $VICIDiaL_park_on_extension = $row[25];
+    $VICIDiaL_park_on_filename = $row[26];
+    $monitor_prefix = $row[27];
+    $recording_exten = $row[28];
+    $voicemail_exten = $row[29];
+    $voicemail_dump_exten = $row[30];
+    $ext_context = $row[31];
+    $dtmf_send_extension = $row[32];
+    $call_out_number_group = $row[33];
+    $client_browser = $row[34];
+    $install_directory = $row[35];
+    $local_web_callerID_URL = $row[36];
+    $VICIDiaL_web_URL = $row[37];
+    $AGI_call_logging_enabled = $row[38];
+    $user_switching_enabled = $row[39];
+    $conferencing_enabled = $row[40];
+    $admin_hangup_enabled = $row[41];
+    $admin_hijack_enabled = $row[42];
+    $admin_monitor_enabled = $row[43];
+    $call_parking_enabled = $row[44];
+    $updater_check_enabled = $row[45];
+    $AFLogging_enabled = $row[46];
+    $QUEUE_ACTION_enabled = $row[47];
+    $CallerID_popup_enabled = $row[48];
+    $voicemail_button_enabled = $row[49];
+    $enable_fast_refresh = $row[50];
+    $fast_refresh_rate = $row[51];
+    $enable_persistant_mysql = $row[52];
+    $auto_dial_next_number = $row[53];
+    $VDstop_rec_after_each_call = $row[54];
+    $DBX_server = $row[55];
+    $DBX_database = $row[56];
+    $DBX_user = $row[57];
+    $DBX_pass = $row[58];
+    $DBX_port = $row[59];
+    $outbound_cid = $row[65];
+    $enable_sipsak_messages = $row[66];
+    $conf_secret = $row[72];
+    $is_webphone = $row[73];
+    $use_external_server_ip = $row[74];
+    $codecs_list = $row[75];
+    $webphone_dialpad = $row[76];
+    $phone_ring_timeout = $row[77];
+    $on_hook_agent = $row[78];
+    $webphone_auto_answer = $row[79];
+    $webphone_dialbox = $row[80];
+    $webphone_mute = $row[81];
+    $webphone_volume = $row[82];
+    $webphone_debug = $row[83];
+    $webphone_layout = $row[84];
+}
+
+// webphone_layout override kontrolü
+if (strlen($webphone_layout_override) > 0) {
+    $webphone_layout = $webphone_layout_override;
+}
+
+// webphone_dialpad override kontrolü
+if (($webphone_dialpad_override != 'DISABLED') && (strlen($webphone_dialpad_override) > 0)) {
+    $webphone_dialpad = $webphone_dialpad_override;
+}
+
+// System settings'ten webphone bilgilerini al
+$webphone_url = '';
+$web_socket_url = '';
+$webphone_width = 460;
+$webphone_height = 500;
+$webphone_location = 'right';
+
 $stmt = "SELECT webphone_url FROM system_settings LIMIT 1;";
 $rslt = mysql_to_mysqli($stmt, $link);
 if (mysqli_num_rows($rslt) > 0) {
     $row = mysqli_fetch_row($rslt);
-    $webphone_url = $row[0]; 
-  }
-
-$stmt = "SELECT web_socket_url FROM servers LIMIT 1;";
+    if (strlen($webphone_url_override) < 6) {
+        $webphone_url = $row[0];
+    } else {
+        $webphone_url = $webphone_url_override;
+    }
+    
+}
+$stmt = "SELECT server_ip,web_socket_url FROM servers LIMIT 1;";
 $rslt = mysql_to_mysqli($stmt, $link);
 if (mysqli_num_rows($rslt) > 0) {
     $row = mysqli_fetch_row($rslt);
-    $web_socket_url = $row[0]; 
-  }
-
-// Kullanıcının phone bilgilerini tekrar çek (webphone için)
-$stmt = "SELECT login,pass,phone_ip,phone_context,webphone_auto_answer,server_ip FROM phones WHERE dialplan_number='$phone_login' AND active='Y';";
-$rslt = mysql_to_mysqli($stmt, $link);
-if (mysqli_num_rows($rslt) > 0) {
-    $row = mysqli_fetch_row($rslt);
-    $user_phone_login = $row[0];
-    $user_phone_pass = $row[1];
-    $user_phone_ip = $row[2];
-    $user_phone_context = $row[3];
-    if ($row[4] != '') { $webphone_auto_answer = $row[4]; }
-    $phone_server_ip = $row[5];
-   
-  }
-
-// WebPhone server bilgilerini al
-$webphone_server = '';
-$webphone_protocol = 'SIP';
-$webphone_extension = $phone_login;
-
-$stmt = "SELECT server_ip,web_socket_url FROM servers WHERE server_ip='$server_ip' OR active='Y' LIMIT 1;";
-$rslt = mysql_to_mysqli($stmt, $link);
-if (mysqli_num_rows($rslt) > 0) {
-    $row = mysqli_fetch_row($rslt);
-    $webphone_server = $row[0];
-    if ($row[1] != '') {  $websocket_url= $row[1]; }
-   
+    
+        $server_ip = $row[0];
+        $web_socket_url= $row[1];
 }
 
-// WebRTC/SIP ayarları
-$sip_domain =  $server_ip;
+// Server bilgilerini al - external IP için
+$webphone_server_ip = $server_ip;
+if ($use_external_server_ip == 'Y') {
+    $stmt = "SELECT external_server_ip,  FROM servers where server_ip='$server_ip' LIMIT 1;";
+    $rslt = mysql_to_mysqli($stmt, $link);
+    if (mysqli_num_rows($rslt) > 0) {
+        $row = mysqli_fetch_row($rslt);
+        $webphone_server_ip = $row[0];
+   
+    }
+}
 
+// System key kontrolü
+if (strlen($system_key) < 1) {
+    $stmt = "SELECT webphone_systemkey FROM system_settings LIMIT 1;";
+    $rslt = mysql_to_mysqli($stmt, $link);
+    if (mysqli_num_rows($rslt) > 0) {
+        $row = mysqli_fetch_row($rslt);
+        $system_key = $row[0];
+    }
+}
 
+// WebPhone iframe URL'sini oluştur - ice_agent.php'deki gibi
+$WebPhonEurl = '';
+$webphone_content = '';
 
+if ($is_webphone == 'Y') {
+    // Codecs temizle
+    $codecs_list = preg_replace("/ /", '', $codecs_list);
+    $codecs_list = preg_replace("/-/", '', $codecs_list);
+    $codecs_list = preg_replace("/&/", '', $codecs_list);
+    
+    // WebPhone options oluştur
+    $webphone_options = 'INITIAL_LOAD';
+    if ($webphone_dialpad == 'Y') { $webphone_options .= "--DIALPAD_Y"; }
+    if ($webphone_dialpad == 'N') { $webphone_options .= "--DIALPAD_N"; }
+    if ($webphone_dialpad == 'TOGGLE') { $webphone_options .= "--DIALPAD_TOGGLE"; }
+    if ($webphone_dialpad == 'TOGGLE_OFF') { $webphone_options .= "--DIALPAD_OFF_TOGGLE"; }
+    if ($webphone_auto_answer == 'Y') { $webphone_options .= "--AUTOANSWER_Y"; }
+    if ($webphone_auto_answer == 'N') { $webphone_options .= "--AUTOANSWER_N"; }
+    if ($webphone_dialbox == 'Y') { $webphone_options .= "--DIALBOX_Y"; }
+    if ($webphone_dialbox == 'N') { $webphone_options .= "--DIALBOX_N"; }
+    if ($webphone_mute == 'Y') { $webphone_options .= "--MUTE_Y"; }
+    if ($webphone_mute == 'N') { $webphone_options .= "--MUTE_N"; }
+    if ($webphone_volume == 'Y') { $webphone_options .= "--VOLUME_Y"; }
+    if ($webphone_volume == 'N') { $webphone_options .= "--VOLUME_N"; }
+    if ($webphone_debug == 'Y') { $webphone_options .= "--DEBUG"; }
+    if (strlen($web_socket_url) > 5) { $webphone_options .= "--WEBSOCKETURL$web_socket_url"; }
+    if (strlen($webphone_layout) > 0) { $webphone_options .= "--WEBPHONELAYOUT$webphone_layout"; }
+    
+    // FQDN oluştur
+    $server_name = $_SERVER['SERVER_NAME'];
+    $server_port = $_SERVER['SERVER_PORT'];
+    if ($server_port == '80' || $server_port == '443') {
+        $server_port = '';
+    } else {
+        $server_port = ':' . $server_port;
+    }
+    $FQDN = $server_name . $server_port;
+    
+    $webphone_url = preg_replace("/LOCALFQDN/", $FQDN, $webphone_url);
+    
+    // Base64 encode variables
+    $b64_phone_login = base64_encode($extension);
+    $b64_phone_pass = base64_encode($conf_secret);
+    $b64_session_name = base64_encode($session_name);
+    $b64_server_ip = base64_encode($webphone_server_ip);
+    $b64_callerid = base64_encode($outbound_cid);
+    $b64_protocol = base64_encode($protocol);
+    $b64_codecs = base64_encode($codecs_list);
+    $b64_options = base64_encode($webphone_options);
+    $b64_system_key = base64_encode($system_key);
+    
+    $WebPhonEurl = "$webphone_url?phone_login=$b64_phone_login&phone_pass=$b64_phone_pass&server_ip=$b64_server_ip&callerid=$b64_callerid&protocol=$b64_protocol&codecs=$b64_codecs&options=$b64_options&system_key=$b64_system_key";
+  
+    // Iframe content oluştur
+    if ($webphone_location == 'bar') {
+        $webphone_content = "<iframe src=\"$WebPhonEurl\" style=\"width:" . $webphone_width . "px;height:" . $webphone_height . "px;background-color:transparent;z-index:17;\" scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\" id=\"webphone\" name=\"webphone\" width=\"" . $webphone_width . "px\" height=\"" . $webphone_height . "px\" allow=\"microphone\"> </iframe>";
+    } else {
+        $webphone_content = "<iframe src=\"$WebPhonEurl\" style=\"width:" . $webphone_width . "px;height:" . $webphone_height . "px;background-color:transparent;z-index:17;\" scrolling=\"auto\" frameborder=\"0\" allowtransparency=\"true\" id=\"webphone\" name=\"webphone\" width=\"" . $webphone_width . "px\" height=\"" . $webphone_height . "px\" allow=\"microphone\"> </iframe>";
+    }
+}
+
+// KISIM 1 SONU - Kısım 2'ye devam edecek...
+?>
+<?php
+// KISIM 2 BAŞLANGIÇ - Kısım 1'den sonra gelecek
 
 // Grup bazlı kampanya kontrolü
 $campaign_sql = "";
@@ -193,9 +423,8 @@ if (mysqli_num_rows($rslt) > 0) {
     }
 }
 
-// Manuel arama action'ı
+// ACTION İŞLEMLERİ
 if ($action == 'manual_dial' && $phone_number) {
-    // Lead bilgilerini kontrol et
     $lead_found = false;
     $stmt = "SELECT lead_id,first_name,last_name,campaign_id FROM vicidial_list WHERE phone_number='$phone_number' LIMIT 1;";
     $rslt = mysql_to_mysqli($stmt, $link);
@@ -211,11 +440,9 @@ if ($action == 'manual_dial' && $phone_number) {
         $lead_campaign = 'QC';
     }
     
-    // Session güncelle
     $stmt = "UPDATE vicidial_live_agents SET status='INCALL',lead_id='$found_lead_id',campaign_id='$lead_campaign',last_call_time='$NOW_TIME',calls_today=calls_today+1 WHERE user='$VD_login';";
     $rslt = mysql_to_mysqli($stmt, $link);
     
-    // Call log kayıt
     $uniqueid = $CIDdate . '_' . $VD_login;
     $stmt = "INSERT INTO call_log (uniqueid,channel,channel_group,type,server_ip,extension,number_dialed,caller_code,start_time,start_epoch,end_time,end_epoch,length_in_sec,length_in_min,adapter,lead_id,phone_code,phone_number,user,comments) VALUES('$uniqueid','Local/$phone_login','QC_MANUAL','OUT','$server_ip','$phone_login','$phone_number','QC','$NOW_TIME','$StarTtimE','$NOW_TIME','$StarTtimE','0','0','QC_Panel','$found_lead_id','1','$phone_number','$VD_login','QC_Manual_Dial');";
     $rslt = mysql_to_mysqli($stmt, $link);
@@ -227,7 +454,6 @@ if ($action == 'manual_dial' && $phone_number) {
     }
 }
 
-// Çağrı sonlandırma action'ı
 if ($action == 'hangup_call') {
     $stmt = "UPDATE vicidial_live_agents SET status='PAUSED',lead_id='',last_call_finish='$NOW_TIME' WHERE user='$VD_login';";
     $rslt = mysql_to_mysqli($stmt, $link);
@@ -239,29 +465,25 @@ if ($action == 'hangup_call') {
     }
 }
 
-// QC Sonuç kaydetme
 if ($action == 'save_qc_result' && $qc_result && $lead_id) {
-    // QC sonuç kodlarını tanımla
- $qc_codes = array(
-    'OK' => 'Başarılı',
-    'RED' => 'Red',
-    'NOANS' => 'Ulaşılamadı',
-    'BUSY' => 'Meşgul',
-    'HOLD' => 'Beklemeye Alındı',
-    'CALLBACK' => 'Geri Arama',
-    'FOLLOWUP' => 'Takip'
-);    
+    $qc_codes = array(
+        'OK' => 'Başarılı',
+        'RED' => 'Red',
+        'NOANS' => 'Ulaşılamadı', 
+        'BUSY' => 'Meşgul',
+        'HOLD' => 'Beklemeye Alındı',
+        'CALLBACK' => 'Geri Arama',
+        'FOLLOWUP' => 'Takip'
+    );
+    
     if (array_key_exists($qc_result, $qc_codes)) {
-        // A_ozel_tablo'da QC sonucunu güncelle
         $qc_description = $qc_codes[$qc_result];
         $stmt = "UPDATE A_ozel_tablo SET qc_result='$qc_result', qc_description='$qc_description', qc_agent='$VD_login', qc_date='$NOW_TIME' WHERE lead_id='$lead_id';";
         $rslt = mysql_to_mysqli($stmt, $link);
         
-        // Log kayıt
         $stmt = "INSERT INTO vicidial_agent_log (user,event,campaign_id,event_date,event_epoch,lead_id,phone_number,user_group) VALUES('$VD_login','QC_RESULT','QC','$NOW_TIME','$StarTtimE','$lead_id','$phone_number','$user_group');";
         $rslt = mysql_to_mysqli($stmt, $link);
         
-        // Agent durumunu READY yap
         $stmt = "UPDATE vicidial_live_agents SET status='READY' WHERE user='$VD_login';";
         $rslt = mysql_to_mysqli($stmt, $link);
     }
@@ -273,7 +495,6 @@ if ($action == 'save_qc_result' && $qc_result && $lead_id) {
     }
 }
 
-// Recording control
 if ($action == 'recording_start') {
     $stmt = "UPDATE vicidial_live_agents SET comments='QC_Panel_REC_ON' WHERE user='$VD_login';";
     $rslt = mysql_to_mysqli($stmt, $link);
@@ -298,7 +519,6 @@ if ($action == 'recording_stop') {
     }
 }
 
-// Agent status değiştirme
 if ($action == 'change_status') {
     $new_status = isset($_GET['status']) ? $_GET['status'] : 'PAUSED';
     $new_status = preg_replace("/[^A-Z]/", "", $new_status);
@@ -313,7 +533,6 @@ if ($action == 'change_status') {
     }
 }
 
-// Status kontrol
 if ($action == 'status_check') {
     $stmt="SELECT status,calls_today,comments FROM vicidial_live_agents where user='$VD_login';";
     $rslt=mysql_to_mysqli($stmt, $link);
@@ -330,7 +549,6 @@ if ($action == 'status_check') {
     }
 }
 
-// Logout işlemi
 if ($action == 'logout') {
     $stmt = "DELETE FROM vicidial_live_agents WHERE user='$VD_login';";
     $rslt = mysql_to_mysqli($stmt, $link);
@@ -338,12 +556,13 @@ if ($action == 'logout') {
     $stmt = "INSERT INTO vicidial_user_log (user,event,campaign_id,event_date,event_epoch,user_group,session_id) values('$VD_login','LOGOUT','QC','$NOW_TIME','$StarTtimE','$user_group','$session_name');";
     $rslt = mysql_to_mysqli($stmt, $link);
     
+    session_destroy();
     header("Location: ../index.php");
     exit;
 }
 
 // Filtre oluşturma
-$search_filter = "WHERE lead_id>0 ";
+$search_filter = "WHERE 1=1 ";
 if (isset($_GET['search']) && strlen($_GET['search']) > 0) {
     $search = mysqli_real_escape_string($link, $_GET['search']);
     $search_filter .= "AND (first_name LIKE '%$search%' OR last_name LIKE '%$search%' OR phone_number LIKE '%$search%' OR user LIKE '%$search%') ";
@@ -361,7 +580,6 @@ if ($date_end) {
     $search_filter .= "AND DATE(entry_date) <= '$date_end' ";
 }
 
-// QC sonuç filtresi
 if (isset($_GET['qc_filter']) && $_GET['qc_filter'] != '') {
     $qc_filter = mysqli_real_escape_string($link, $_GET['qc_filter']);
     if ($qc_filter == 'PENDING') {
@@ -390,10 +608,22 @@ $total_pages = ceil($total_records / $records_per_page);
 $stmt = "SELECT * FROM A_ozel_tablo $search_filter $campaign_sql ORDER BY entry_date DESC LIMIT $offset, $records_per_page";
 $rslt = mysql_to_mysqli($stmt, $link);
 
-
 // Kampanya listesi çek
 $campaign_list_stmt = "SELECT DISTINCT campaign_id FROM A_ozel_tablo $campaign_sql ORDER BY campaign_id";
 $campaign_list_rslt = mysql_to_mysqli($campaign_list_stmt, $link);
+
+// URL oluştur fonksiyonu
+function build_url($page = null) {
+    $params = $_GET;
+    unset($params['action']);
+    
+    if ($page !== null) {
+        $params['page'] = $page;
+    }
+    
+    $query_string = http_build_query($params);
+    return $_SERVER['PHP_SELF'] . ($query_string ? '?' . $query_string : '');
+}
 
 header ("Content-type: text/html; charset=utf-8");
 ?>
@@ -402,10 +632,9 @@ header ("Content-type: text/html; charset=utf-8");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VICIdial QC Panel - Enhanced</title>
+    <title>VICIdial QC Panel - Enhanced with WebPhone</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://unpkg.com/jssip@3.10.1/dist/jssip.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
@@ -531,57 +760,35 @@ header ("Content-type: text/html; charset=utf-8");
         .webphone-container {
             position: fixed;
             top: 80px;
-            right: 20px;
-            width: 300px;
-            height: 400px;
+            <?php echo ($webphone_location == 'bar') ? 'bottom: 0; left: 0; right: 0; height: ' . $webphone_height . 'px;' : 'right: 20px; width: ' . $webphone_width . 'px; max-height: ' . $webphone_height . 'px;'; ?>
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
-            border-radius: 15px;
+            border-radius: <?php echo ($webphone_location == 'bar') ? '0' : '15px'; ?>;
             box-shadow: var(--card-shadow);
             z-index: 1000;
             transition: all 0.3s ease;
-            transform: translateX(320px);
+            transform: <?php echo ($webphone_location == 'bar') ? 'translateY(100%)' : 'translateX(320px)'; ?>;
+            overflow: hidden;
         }
 
         .webphone-container.active {
-            transform: translateX(0);
+            transform: translate(0, 0);
         }
 
         .webphone-header {
             background: var(--gradient-bg);
             color: white;
             padding: 1rem;
-            border-radius: 15px 15px 0 0;
+            border-radius: <?php echo ($webphone_location == 'bar') ? '0' : '15px 15px 0 0'; ?>;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .webphone-content {
-            padding: 1rem;
-        }
-
-        .dial-pad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin: 1rem 0;
-        }
-
-        .dial-button {
-            aspect-ratio: 1;
-            border: none;
-            border-radius: 10px;
-            background: var(--gradient-bg);
-            color: white;
-            font-weight: 600;
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-        }
-
-        .dial-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        .webphone-iframe-container {
+            width: 100%;
+            height: calc(100% - 60px);
+            overflow: hidden;
         }
 
         .notification {
@@ -591,6 +798,20 @@ header ("Content-type: text/html; charset=utf-8");
             z-index: 9999;
             min-width: 300px;
             max-width: 400px;
+        }
+
+        .session-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f59e0b;
+            color: white;
+            text-align: center;
+            padding: 0.5rem;
+            z-index: 9998;
+            font-weight: 600;
+            display: none;
         }
 
         @media (max-width: 768px) {
@@ -610,14 +831,58 @@ header ("Content-type: text/html; charset=utf-8");
                 transform: translateY(0);
             }
         }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .status-INCALL {
+            animation: pulse 2s infinite;
+        }
+        
+        .table tbody tr {
+            transition: all 0.2s ease;
+        }
+        
+        .table tbody tr:hover {
+            background: rgba(37, 99, 235, 0.05) !important;
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .webphone-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
     </style>
 </head>
 <body>
+    <!-- Session timeout warning -->
+    <div class="session-warning" id="sessionWarning">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        Session will expire in <span id="sessionTimer">5</span> minutes. Please save your work.
+    </div>
+
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="#">
                 <i class="fas fa-clipboard-check me-2"></i>VICIdial QC Panel
+                <?php if ($is_webphone == 'Y'): ?>
+                <span class="badge bg-success ms-2">WebPhone Enabled</span>
+                <?php endif; ?>
             </a>
             
             <!-- Agent Status Panel -->
@@ -641,9 +906,11 @@ header ("Content-type: text/html; charset=utf-8");
                     <button class="btn btn-info btn-sm" id="record-btn" onclick="toggleRecording()" title="Toggle Recording">
                         <i class="fas fa-microphone"></i>
                     </button>
+                    <?php if ($is_webphone == 'Y'): ?>
                     <button class="btn btn-primary btn-sm" onclick="toggleWebphone()" title="WebPhone">
-                        <i class="fas fa-phone"></i>
+                        <i class="fas fa-phone"></i> WebPhone
                     </button>
+                    <?php endif; ?>
                     <div class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle fw-bold text-primary" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i><?php echo htmlspecialchars($full_name); ?>
@@ -651,6 +918,11 @@ header ("Content-type: text/html; charset=utf-8");
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><span class="dropdown-item-text">Level: <?php echo $user_level; ?></span></li>
                             <li><span class="dropdown-item-text">Phone: <?php echo $phone_login; ?></span></li>
+                            <li><span class="dropdown-item-text">Extension: <?php echo $extension; ?></span></li>
+                            <li><span class="dropdown-item-text">Session: <?php echo substr($session_name, -8); ?></span></li>
+                            <?php if ($is_webphone == 'Y'): ?>
+                            <li><span class="dropdown-item-text">WebPhone: Active</span></li>
+                            <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="?action=logout">
                                 <i class="fas fa-sign-out-alt me-2"></i>Çıkış
@@ -663,54 +935,27 @@ header ("Content-type: text/html; charset=utf-8");
     </nav>
 
     <!-- WebPhone Container -->
+    <?php if ($is_webphone == 'Y' && !empty($webphone_content)): ?>
     <div class="webphone-container" id="webphoneContainer">
         <div class="webphone-header">
             <div>
-                <i class="fas fa-phone me-2"></i>WebPhone
+                <i class="fas fa-phone me-2"></i>WebPhone - <?php echo $extension; ?>
+                <div style="font-size: 0.8rem; opacity: 0.8;">
+                    Server: <?php echo $webphone_server_ip; ?>
+                </div>
             </div>
             <button class="btn btn-sm btn-outline-light" onclick="toggleWebphone()">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <div class="webphone-content">
-            <div class="mb-3">
-                <input type="text" class="form-control" id="dialNumber" placeholder="Telefon numarası" maxlength="15">
-            </div>
-            <div class="dial-pad">
-                <button class="dial-button" onclick="addDigit('1')">1</button>
-                <button class="dial-button" onclick="addDigit('2')">2</button>
-                <button class="dial-button" onclick="addDigit('3')">3</button>
-                <button class="dial-button" onclick="addDigit('4')">4</button>
-                <button class="dial-button" onclick="addDigit('5')">5</button>
-                <button class="dial-button" onclick="addDigit('6')">6</button>
-                <button class="dial-button" onclick="addDigit('7')">7</button>
-                <button class="dial-button" onclick="addDigit('8')">8</button>
-                <button class="dial-button" onclick="addDigit('9')">9</button>
-                <button class="dial-button" onclick="addDigit('*')">*</button>
-                <button class="dial-button" onclick="addDigit('0')">0</button>
-                <button class="dial-button" onclick="addDigit('#')">#</button>
-            </div>
-            <div class="d-grid gap-2">
-                <button class="btn btn-success" onclick="makeWebphoneCall()">
-                    <i class="fas fa-phone me-2"></i>Ara
-                </button>
-                <button class="btn btn-danger" onclick="hangupWebphoneCall()">
-                    <i class="fas fa-phone-slash me-2"></i>Kapat
-                </button>
-                <button class="btn btn-secondary" onclick="clearDialNumber()">
-                    <i class="fas fa-backspace me-2"></i>Temizle
-                </button>
-            </div>
-            <div class="mt-3">
-                <small class="text-muted">
-                    <i class="fas fa-info-circle me-1"></i>
-                    WebPhone Extension: <?php echo $phone_login; ?>
-                </small>
-            </div>
+        <div class="webphone-iframe-container">
+            <?php echo $webphone_content; ?>
         </div>
     </div>
+    <?php endif; ?>
 
-    <div class="container-fluid mt-4">
+<!-- KISIM 2 SONU - Kısım 3'e devam edecek... --> 
+<div class="container-fluid mt-4 fade-in">
         <!-- Stats Cards -->
         <div class="row">
             <div class="col-md-3">
@@ -751,7 +996,7 @@ header ("Content-type: text/html; charset=utf-8");
                 </h5>
             </div>
             <div class="card-body">
-                <form method="GET" class="row g-3">
+                <form method="GET" class="row g-3" id="filterForm">
                     <div class="col-md-3">
                         <label class="form-label">Arama</label>
                         <input type="text" class="form-control" name="search" 
@@ -763,6 +1008,7 @@ header ("Content-type: text/html; charset=utf-8");
                         <select class="form-select" name="campaign_filter">
                             <option value="">Tümü</option>
                             <?php
+                            mysqli_data_seek($campaign_list_rslt, 0); // Reset pointer
                             while ($camp_row = mysqli_fetch_row($campaign_list_rslt)) {
                                 $selected = ($campaign_filter == $camp_row[0]) ? 'selected' : '';
                                 echo "<option value='{$camp_row[0]}' $selected>{$camp_row[0]}</option>";
@@ -802,7 +1048,7 @@ header ("Content-type: text/html; charset=utf-8");
                     </div>
                 </form>
                 <div class="mt-2">
-                    <a href="?" class="btn btn-outline-secondary btn-sm">
+                    <a href="<?php echo $_SERVER['PHP_SELF']; ?>" class="btn btn-outline-secondary btn-sm">
                         <i class="fas fa-refresh me-1"></i>Temizle
                     </a>
                 </div>
@@ -877,22 +1123,71 @@ header ("Content-type: text/html; charset=utf-8");
             </div>
         </div>
 
-        <!-- Pagination -->
+        <!-- Fixed Pagination -->
         <?php if ($total_pages > 1): ?>
         <nav aria-label="Sayfa navigasyonu" class="mt-4">
             <ul class="pagination justify-content-center">
                 <?php
-                $current_url = $_SERVER['REQUEST_URI'];
-                $current_url = preg_replace('/[?&]page=\d+/', '', $current_url);
-                $separator = (strpos($current_url, '?') !== false) ? '&' : '?';
+                // Previous button
+                if ($page > 1): ?>
+                <li class="page-item">
+                    <a class="page-link" href="<?php echo build_url($page - 1); ?>">
+                        <i class="fas fa-chevron-left"></i> Önceki
+                    </a>
+                </li>
+                <?php endif; ?>
                 
-                for ($i = 1; $i <= $total_pages; $i++): 
-                ?>
+                <?php
+                // Page numbers with smart range
+                $start_page = max(1, $page - 2);
+                $end_page = min($total_pages, $page + 2);
+                
+                if ($start_page > 1): ?>
+                <li class="page-item">
+                    <a class="page-link" href="<?php echo build_url(1); ?>">1</a>
+                </li>
+                <?php if ($start_page > 2): ?>
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                <?php endif; ?>
+                <?php endif; ?>
+                
+                <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
                 <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
-                    <a class="page-link" href="<?php echo $current_url . $separator . 'page=' . $i; ?>"><?php echo $i; ?></a>
+                    <a class="page-link" href="<?php echo build_url($i); ?>"><?php echo $i; ?></a>
                 </li>
                 <?php endfor; ?>
+                
+                <?php if ($end_page < $total_pages): ?>
+                <?php if ($end_page < $total_pages - 1): ?>
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                <?php endif; ?>
+                <li class="page-item">
+                    <a class="page-link" href="<?php echo build_url($total_pages); ?>"><?php echo $total_pages; ?></a>
+                </li>
+                <?php endif; ?>
+                
+                <?php
+                // Next button
+                if ($page < $total_pages): ?>
+                <li class="page-item">
+                    <a class="page-link" href="<?php echo build_url($page + 1); ?>">
+                        Sonraki <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                <?php endif; ?>
             </ul>
+            
+            <!-- Page info -->
+            <div class="text-center mt-2">
+                <small class="text-muted">
+                    Sayfa <?php echo $page; ?> / <?php echo $total_pages; ?> 
+                    (<?php echo $total_records; ?> kayıt)
+                </small>
+            </div>
         </nav>
         <?php endif; ?>
     </div>
@@ -942,7 +1237,7 @@ header ("Content-type: text/html; charset=utf-8");
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Enhanced JavaScript -->
+    <!-- Enhanced JavaScript with Session Management -->
     <script>
     var currentRecordingStatus = '<?php echo $recording_status; ?>';
     var agentStatus = '<?php echo $agent_status; ?>';
@@ -950,7 +1245,277 @@ header ("Content-type: text/html; charset=utf-8");
     var currentPhoneNumber = '';
     var webphoneActive = false;
     var callActive = false;
+    var sessionTimeout = null;
     
+    // WebPhone Variables - ice_agent.php'den referans alınarak
+    let webphoneSession = null;
+    let webphoneRegistered = false;
+    let userAgent = null;
+
+    // WebPhone configuration
+    const webphoneConfig = {
+        extension: '<?php echo $phone_login; ?>',
+        password: '<?php echo $phone_pass; ?>',
+        server: '<?php echo $server_ip; ?>',
+        websocketUrl: '<?php echo $web_socket_url; ?>',
+        autoAnswer: <?php echo ($webphone_auto_answer == 'Y') ? 'true' : 'false'; ?>,
+        dialpadColor: '<?php echo $webphone_dialpad_color; ?>',
+        protocol: '<?php echo $protocol; ?>'
+    };
+
+    // Session Management Functions
+    function initSessionManagement() {
+        // Session timeout warning (25 dakika sonra uyar, 30 dakikada logout)
+        sessionTimeout = setTimeout(showSessionWarning, 25 * 60 * 1000);
+        
+        // Her 5 dakikada bir session'ı yenile
+        setInterval(refreshSession, 5 * 60 * 1000);
+    }
+
+    function showSessionWarning() {
+        const warning = document.getElementById('sessionWarning');
+        const timer = document.getElementById('sessionTimer');
+        let minutes = 5;
+        
+        warning.style.display = 'block';
+        
+        const countdown = setInterval(() => {
+            minutes--;
+            timer.textContent = minutes;
+            
+            if (minutes <= 0) {
+                clearInterval(countdown);
+                // Force logout
+                window.location.href = '?action=logout';
+            }
+        }, 60000);
+    }
+
+    function refreshSession() {
+        // Silent session refresh
+        fetch('?action=status_check&ajax=1')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Session refreshed successfully
+                    console.log('Session refreshed');
+                }
+            })
+            .catch(error => {
+                console.error('Session refresh failed:', error);
+            });
+    }
+
+    // WebPhone Functions - ice_agent.php'den referans alınarak düzeltilmiş
+    function initializeWebPhone() {
+        console.log('Initializing WebPhone with config:', webphoneConfig);
+        updateWebPhoneStatus('Bağlanıyor...');
+        
+        if (!webphoneConfig.extension || !webphoneConfig.password) {
+            showNotification('WebPhone: Extension bilgileri eksik', 'error');
+            updateWebPhoneStatus('Hata: Bilgiler eksik');
+            return;
+        }
+
+        try {
+            // SIP.js UserAgent oluştur
+            const uri = `sip:${webphoneConfig.extension}@${webphoneConfig.server}`;
+            
+            const userAgentOptions = {
+                uri: SIP.UserAgent.makeURI(uri),
+                transportOptions: {
+                    server: webphoneConfig.websocketUrl,
+                    keepAliveInterval: 30,
+                    connectionTimeout: 15,
+                    maxReconnectionAttempts: 10,
+                    reconnectionTimeout: 4
+                },
+                authorizationUsername: webphoneConfig.extension,
+                authorizationPassword: webphoneConfig.password,
+                displayName: '<?php echo $full_name; ?>',
+                sessionDescriptionHandlerFactoryOptions: {
+                    constraints: {
+                        audio: true,
+                        video: false
+                    }
+                },
+                delegate: {
+                    onConnect: () => {
+                        console.log('WebPhone connected to server');
+                        showNotification('WebPhone: Sunucuya bağlandı', 'success');
+                        updateWebPhoneStatus('Bağlandı');
+                    },
+                    onDisconnect: (error) => {
+                        console.log('WebPhone disconnected:', error);
+                        webphoneRegistered = false;
+                        showNotification('WebPhone: Bağlantı kesildi', 'warning');
+                        updateWebPhoneStatus('Bağlantı kesildi');
+                    },
+                    onInvite: (invitation) => {
+                        console.log('Incoming call from:', invitation.remoteIdentity.uri.user);
+                        handleIncomingCall(invitation);
+                    }
+                }
+            };
+
+            userAgent = new SIP.UserAgent(userAgentOptions);
+            
+            // Start the user agent
+            userAgent.start().then(() => {
+                console.log('WebPhone UserAgent started');
+                updateWebPhoneStatus('Kayıt oluyor...');
+                
+                // Register
+                const registerer = new SIP.Registerer(userAgent);
+                registerer.register().then(() => {
+                    webphoneRegistered = true;
+                    showNotification(`WebPhone: ${webphoneConfig.extension} kayıtlı`, 'success');
+                    updateWebPhoneStatus('Kayıtlı ✓');
+                }).catch((error) => {
+                    console.error('WebPhone registration failed:', error);
+                    showNotification('WebPhone: Kayıt başarısız - ' + error.message, 'error');
+                    updateWebPhoneStatus('Kayıt hatası');
+                });
+                
+            }).catch((error) => {
+                console.error('WebPhone UserAgent start failed:', error);
+                showNotification('WebPhone: Başlatma hatası - ' + error.message, 'error');
+                updateWebPhoneStatus('Başlatma hatası');
+            });
+
+        } catch (error) {
+            console.error('WebPhone initialization error:', error);
+            showNotification('WebPhone: Başlatma hatası - ' + error.message, 'error');
+            updateWebPhoneStatus('Başlatma hatası');
+        }
+    }
+
+    function updateWebPhoneStatus(status) {
+        const statusElement = document.getElementById('webphoneStatus');
+        if (statusElement) {
+            statusElement.textContent = status;
+            
+            // Status'a göre renk değiştir
+            statusElement.className = 'webphone-status';
+            if (status.includes('✓') || status.includes('Kayıtlı')) {
+                statusElement.style.background = 'rgba(16, 185, 129, 0.2)';
+                statusElement.style.color = '#10b981';
+            } else if (status.includes('Hata') || status.includes('hatası')) {
+                statusElement.style.background = 'rgba(239, 68, 68, 0.2)';
+                statusElement.style.color = '#ef4444';
+            } else if (status.includes('Görüşmede')) {
+                statusElement.style.background = 'rgba(6, 182, 212, 0.2)';
+                statusElement.style.color = '#06b6d4';
+            } else {
+                statusElement.style.background = 'rgba(245, 158, 11, 0.2)';
+                statusElement.style.color = '#f59e0b';
+            }
+        }
+    }
+
+    function makeWebRTCCall(number) {
+        if (!webphoneRegistered || !userAgent) {
+            showNotification('WebPhone: Kayıtlı değil', 'error');
+            return;
+        }
+        
+        try {
+            const target = SIP.UserAgent.makeURI(`sip:${number}@${webphoneConfig.server}`);
+            if (!target) {
+                showNotification('WebPhone: Geçersiz numara', 'error');
+                return;
+            }
+
+            const inviter = new SIP.Inviter(userAgent, target, {
+                sessionDescriptionHandlerOptions: {
+                    constraints: {
+                        audio: true,
+                        video: false
+                    }
+                }
+            });
+
+            inviter.stateChange.addListener((newState) => {
+                console.log('Call state changed to:', newState);
+                switch (newState) {
+                    case SIP.SessionState.Establishing:
+                        showNotification(`WebPhone: ${number} aranıyor...`, 'info');
+                        updateWebPhoneStatus('Arıyor...');
+                        break;
+                    case SIP.SessionState.Established:
+                        webphoneSession = inviter;
+                        showNotification(`WebPhone: ${number} ile görüşme başladı`, 'success');
+                        updateWebPhoneStatus('Görüşmede ✓');
+                        break;
+                    case SIP.SessionState.Terminated:
+                        webphoneSession = null;
+                        showNotification('WebPhone: Görüşme sonlandı', 'info');
+                        updateWebPhoneStatus('Kayıtlı ✓');
+                        break;
+                }
+            });
+
+            inviter.invite().catch((error) => {
+                console.error('Call failed:', error);
+                showNotification('WebPhone: Arama başarısız - ' + error.message, 'error');
+                updateWebPhoneStatus('Kayıtlı ✓');
+            });
+
+        } catch (error) {
+            console.error('WebRTC call error:', error);
+            showNotification('WebPhone: Arama hatası - ' + error.message, 'error');
+        }
+    }
+
+    function hangupWebRTCCall() {
+        if (webphoneSession) {
+            try {
+                webphoneSession.bye();
+                webphoneSession = null;
+                showNotification('WebPhone: Görüşme sonlandırıldı', 'info');
+                updateWebPhoneStatus('Kayıtlı ✓');
+            } catch (error) {
+                console.error('Hangup error:', error);
+                showNotification('WebPhone: Sonlandırma hatası', 'error');
+            }
+        } else {
+            showNotification('WebPhone: Aktif görüşme bulunamadı', 'warning');
+        }
+    }
+
+    function handleIncomingCall(invitation) {
+        const callerNumber = invitation.remoteIdentity.uri.user;
+        
+        if (webphoneConfig.autoAnswer) {
+            invitation.accept().then(() => {
+                webphoneSession = invitation;
+                showNotification(`WebPhone: ${callerNumber} otomatik yanıtlandı`, 'success');
+                updateWebPhoneStatus('Görüşmede ✓');
+            });
+        } else {
+            if (confirm(`WebPhone: ${callerNumber} arıyor. Yanıtlamak istiyor musunuz?`)) {
+                invitation.accept().then(() => {
+                    webphoneSession = invitation;
+                    showNotification(`WebPhone: ${callerNumber} yanıtlandı`, 'success');
+                    updateWebPhoneStatus('Görüşmede ✓');
+                });
+            } else {
+                invitation.reject();
+                showNotification(`WebPhone: ${callerNumber} reddedildi`, 'info');
+            }
+        }
+    }
+
+    // WebPhone reconnection
+    function reconnectWebPhone() {
+        if (userAgent && userAgent.state === SIP.UserAgentState.Stopped) {
+            console.log('Attempting WebPhone reconnection...');
+            showNotification('WebPhone: Yeniden bağlanılıyor...', 'info');
+            updateWebPhoneStatus('Yeniden bağlanıyor...');
+            initializeWebPhone();
+        }
+    }
+
     // WebPhone Functions
     function toggleWebphone() {
         const container = document.getElementById('webphoneContainer');
@@ -975,14 +1540,21 @@ header ("Content-type: text/html; charset=utf-8");
     function makeWebphoneCall() {
         const number = document.getElementById('dialNumber').value;
         if (number.trim() === '') {
-            showNotification('Lütfen telefon numarası giriniz', 'warning');
+            showNotification('WebPhone: Lütfen telefon numarası giriniz', 'warning');
             return;
         }
-        makeCall(number, '');
+        
+        const cleanNumber = number.replace(/[^\d]/g, '');
+        if (cleanNumber.length < 3) {
+            showNotification('WebPhone: Geçersiz telefon numarası', 'warning');
+            return;
+        }
+        
+        makeWebRTCCall(cleanNumber);
     }
     
     function hangupWebphoneCall() {
-        hangupCall();
+        hangupWebRTCCall();
     }
 
     // Enhanced Call Functions
@@ -1011,8 +1583,6 @@ header ("Content-type: text/html; charset=utf-8");
                                 showNotification('Arama başlatıldı: ' + phoneNumber + '<br>Müşteri: ' + response.customer, 'success');
                                 updateCallCount();
                                 updateAgentStatus('INCALL');
-                                
-                                // Show hangup button
                                 showHangupControls();
                             } else {
                                 callActive = false;
@@ -1051,7 +1621,6 @@ header ("Content-type: text/html; charset=utf-8");
                         updateAgentStatus('PAUSED');
                         
                         if (response.show_qc_modal) {
-                            // Show QC result modal
                             var qcModal = new bootstrap.Modal(document.getElementById('qcResultModal'));
                             qcModal.show();
                         }
@@ -1064,7 +1633,6 @@ header ("Content-type: text/html; charset=utf-8");
                     updateAgentStatus('PAUSED');
                     showNotification('Çağrı sonlandırıldı', 'success');
                     
-                    // Show QC modal after hangup
                     var qcModal = new bootstrap.Modal(document.getElementById('qcResultModal'));
                     qcModal.show();
                 }
@@ -1074,7 +1642,6 @@ header ("Content-type: text/html; charset=utf-8");
     }
     
     function showHangupControls() {
-        // Add floating hangup button
         const hangupBtn = document.createElement('button');
         hangupBtn.id = 'floatingHangupBtn';
         hangupBtn.className = 'btn btn-hangup position-fixed';
@@ -1138,7 +1705,6 @@ header ("Content-type: text/html; charset=utf-8");
         agentStatus = status;
         const statusElement = document.getElementById('agent-status');
         
-        // Remove all status classes
         statusElement.className = 'agent-status-badge';
         statusElement.classList.add('status-' + status);
         statusElement.textContent = status;
@@ -1184,20 +1750,22 @@ header ("Content-type: text/html; charset=utf-8");
                         showNotification(response.message, 'success');
                         updateAgentStatus('READY');
                         
-                        // Close modal
                         var qcModal = bootstrap.Modal.getInstance(document.getElementById('qcResultModal'));
-                        qcModal.hide();
+                        if (qcModal) {
+                            qcModal.hide();
+                        }
                         
-                        // Refresh page after 2 seconds
                         setTimeout(() => {
-                            location.reload();
+                            window.location.reload();
                         }, 2000);
                     }
                 } catch (e) {
                     showNotification('QC sonucu kaydedildi: ' + result, 'success');
                     var qcModal = bootstrap.Modal.getInstance(document.getElementById('qcResultModal'));
-                    qcModal.hide();
-                    setTimeout(() => location.reload(), 2000);
+                    if (qcModal) {
+                        qcModal.hide();
+                    }
+                    setTimeout(() => window.location.reload(), 2000);
                 }
             }
         };
@@ -1244,7 +1812,6 @@ header ("Content-type: text/html; charset=utf-8");
         }, 8000);
     }
 
-    // Status check ve auto-update
     function checkAgentStatus() {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '?action=status_check&ajax=1', true);
@@ -1293,7 +1860,6 @@ header ("Content-type: text/html; charset=utf-8");
             }
         }
         
-        // ESC to close webphone
         if (e.key === 'Escape' && webphoneActive) {
             toggleWebphone();
         }
@@ -1301,10 +1867,22 @@ header ("Content-type: text/html; charset=utf-8");
 
     // Page load initialization
     document.addEventListener('DOMContentLoaded', function() {
+        // Session management'ı başlat
+        initSessionManagement();
+        
         updateRecordingStatus();
         
         // Status kontrolü her 15 saniyede
         setInterval(checkAgentStatus, 15000);
+        
+        // WebPhone connection check every 30 seconds
+        setInterval(() => {
+            if (userAgent && userAgent.state === SIP.UserAgentState.Stopped && webphoneRegistered) {
+                webphoneRegistered = false;
+                updateWebPhoneStatus('Bağlantı kesildi');
+                reconnectWebPhone();
+            }
+        }, 30000);
         
         // Keyboard shortcuts bilgisi
         setTimeout(() => {
@@ -1319,11 +1897,20 @@ header ("Content-type: text/html; charset=utf-8");
         const webphoneContainer = document.getElementById('webphoneContainer');
         webphoneContainer.classList.remove('active');
         
-        <?php if ($webphone == '1'): ?>
-        // WebPhone aktif ise otomatik aç
+        // WebPhone'u başlat
         setTimeout(() => {
-            showNotification('WebPhone aktif - QC Panel hazır', 'success');
-        }, 2000);
+            initializeWebPhone();
+        }, 3000);
+        
+        // Dialpad color'ı uygula
+        <?php if (!empty($webphone_dialpad_color)): ?>
+        const style = document.createElement('style');
+        style.textContent = `
+            .dial-button {
+                background: <?php echo $webphone_dialpad_color; ?> !important;
+            }
+        `;
+        document.head.appendChild(style);
         <?php endif; ?>
     });
 
@@ -1336,28 +1923,12 @@ header ("Content-type: text/html; charset=utf-8");
         }
     });
 
-    // Auto-refresh table every 2 minutes (only if no modal is open)
-    setInterval(function() {
-        const modals = document.querySelectorAll('.modal.show');
-        if (modals.length === 0 && !callActive) {
-            // Soft refresh - only update table content
-            location.reload();
-        }
-    }, 120000);
-
     // Enhanced error handling
-  window.addEventListener('error', function(e) {
-    console.error('Global error:', e.error);
-    
-    // Sadece kritik hataları yakala
-    if (e.error && e.error.name === 'TypeError' && e.error.message.includes('SIP')) {
-        showNotification('WebPhone hatası: SIP kütüphanesi yüklenemedi', 'warning');
-        return;
-    }
-    
-    // Diğer hataları görmezden gel veya sadece console'da logla
-    console.warn('JavaScript error logged, but not critical:', e.error);
-});
+    window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error);
+        showNotification('Bir hata oluştu. Lütfen sayfayı yenileyin.', 'error');
+    });
+
     // Connection monitoring
     let connectionCheckInterval;
     function startConnectionMonitoring() {
@@ -1367,7 +1938,6 @@ header ("Content-type: text/html; charset=utf-8");
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
                     }
-                    // Connection is good
                     document.body.classList.remove('connection-lost');
                 })
                 .catch(error => {
@@ -1375,68 +1945,22 @@ header ("Content-type: text/html; charset=utf-8");
                     document.body.classList.add('connection-lost');
                     showNotification('Bağlantı problemi tespit edildi', 'warning');
                 });
-        }, 30000); // Check every 30 seconds
+        }, 30000);
     }
 
-    // Start connection monitoring
     startConnectionMonitoring();
 
-    // Modern UI enhancements
-    function addModernTouchesToElements() {
-        // Add hover effects to cards
-        const cards = document.querySelectorAll('.card');
-        cards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-2px)';
-                this.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.15)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-                this.style.boxShadow = 'var(--card-shadow)';
-            });
-        });
-
-        // Add ripple effect to buttons
-        const buttons = document.querySelectorAll('.btn');
-        buttons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                const ripple = document.createElement('span');
-                const rect = this.getBoundingClientRect();
-                const size = Math.max(rect.height, rect.width);
-                const x = e.clientX - rect.left - size / 2;
-                const y = e.clientY - rect.top - size / 2;
-                
-                ripple.style.cssText = `
-                    position: absolute;
-                    width: ${size}px;
-                    height: ${size}px;
-                    left: ${x}px;
-                    top: ${y}px;
-                    background: rgba(255, 255, 255, 0.3);
-                    border-radius: 50%;
-                    transform: scale(0);
-                    animation: ripple 0.6s ease-out;
-                    pointer-events: none;
-                `;
-                
-                this.style.position = 'relative';
-                this.style.overflow = 'hidden';
-                this.appendChild(ripple);
-                
-                setTimeout(() => ripple.remove(), 600);
-            });
-        });
-    }
-
-    // Add CSS for ripple animation
+    // Add CSS for additional effects
     const style = document.createElement('style');
     style.textContent = `
-        @keyframes ripple {
-            to {
-                transform: scale(2);
-                opacity: 0;
-            }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .status-INCALL {
+            animation: pulse 2s infinite;
         }
         
         .connection-lost {
@@ -1456,400 +1980,18 @@ header ("Content-type: text/html; charset=utf-8");
             z-index: 9999;
             font-weight: 600;
         }
-    `;
-    document.head.appendChild(style);
-
-    // Apply modern touches
-    setTimeout(addModernTouchesToElements, 500);
-    </script>
-
-    <!-- WebPhone Integration Script -->
-    <?php if ($webphone == '1'): ?>
-    <script>
-    // WebPhone Integration - SIP.js or WebRTC implementation would go here
-   let webphoneSession = null;
-let webphoneRegistered = false;
-let userAgent = null;
-
-// MySQL'den alınan WebPhone ayarları
-// SIP.js yerine JsSIP kullan
-const webphoneConfig = {
-    extension: '<?php echo $webphone_extension; ?>',
-    password: '<?php echo $phone_pass; ?>',
-    server: '<?php echo $sip_domain; ?>',
-    websocketUrl: 'wss://<?php echo $sip_domain; ?>:8089/ws'
-};
-
-let ua = null;
-let session = null;
-
-  
-
-
-
-function initializeWebPhone() {
- console.log('WebPhone temporarily disabled for testing');
-    showNotification('WebPhone: Test için devre dışı', 'info');
-    return;
-     if (typeof SIP === 'undefined') {
-        console.log('SIP.js not available, skipping WebPhone initialization');
-        showNotification('WebPhone: SIP kütüphanesi yüklenemedi', 'warning');
-        return;
-    }
-    console.log('Initializing WebPhone with JsSIP...');
-    
-    const socket = new JsSIP.WebSocketInterface(webphoneConfig.websocketUrl);
-    const configuration = {
-        sockets: [socket],
-        uri: `sip:${webphoneConfig.extension}@${webphoneConfig.server}`,
-        password: webphoneConfig.password,
-        display_name: '<?php echo $full_name; ?>'
-    };
-
-    ua = new JsSIP.UA(configuration);
-
-    ua.on('connecting', function(e) {
-        console.log('WebPhone connecting...');
-        showNotification('WebPhone: Bağlanıyor...', 'info');
-    });
-
-    ua.on('connected', function(e) {
-        console.log('WebPhone connected');
-        showNotification('WebPhone: Bağlandı', 'success');
-    });
-
-    ua.on('registered', function(e) {
-        webphoneRegistered = true;
-        showNotification('WebPhone: Kayıtlı', 'success');
-        updateWebPhoneStatus('registered');
-    });
-
-    ua.on('registrationFailed', function(e) {
-        console.error('Registration failed:', e);
-        showNotification('WebPhone: Kayıt başarısız', 'error');
-    });
-
-    ua.on('newRTCSession', function(e) {
-        session = e.session;
-        if (session.direction === 'incoming') {
-            handleIncomingCall(session);
-        }
-    });
-
-    ua.start();
-}
-
-function makeWebRTCCall(number) {
-    if (!ua || !ua.isRegistered()) {
-        showNotification('WebPhone: Kayıtlı değil', 'error');
-        return;
-    }
-
-    const target = `sip:${number}@${webphoneConfig.server}`;
-    const options = {
-        mediaConstraints: { audio: true, video: false }
-    };
-
-    session = ua.call(target, options);
-    
-    session.on('progress', function() {
-        showNotification(`Aranıyor: ${number}`, 'info');
-    });
-    
-    session.on('confirmed', function() {
-        showNotification(`Görüşme başladı: ${number}`, 'success');
-        updateWebPhoneStatus('in_call');
-    });
-    
-    session.on('ended', function() {
-        showNotification('Görüşme sonlandı', 'info');
-        updateWebPhoneStatus('registered');
-        session = null;
-    });
-}
-
-function hangupWebRTCCall() {
-    if (session) {
-        session.terminate();
-        session = null;
-        showNotification('Görüşme sonlandırıldı', 'info');
-    }
-}
-function handleIncomingCall(invitation) {
-    const callerNumber = invitation.remoteIdentity.uri.user;
-    
-    // Auto answer if enabled
-    if (webphoneConfig.autoAnswer) {
-        invitation.accept().then(() => {
-            webphoneSession = invitation;
-            showNotification(`WebPhone: ${callerNumber} otomatik yanıtlandı`, 'success');
-            updateWebPhoneStatus('in_call');
-        });
-    } else {
-        // Show incoming call notification
-        if (confirm(`WebPhone: ${callerNumber} arıyor. Yanıtlamak istiyor musunuz?`)) {
-            invitation.accept().then(() => {
-                webphoneSession = invitation;
-                showNotification(`WebPhone: ${callerNumber} yanıtlandı`, 'success');
-                updateWebPhoneStatus('in_call');
-            });
-        } else {
-            invitation.reject();
-            showNotification(`WebPhone: ${callerNumber} reddedildi`, 'info');
-        }
-    }
-}
-
-function updateWebPhoneStatus(status) {
-    const statusMap = {
-        'registered': { text: 'Kayıtlı', class: 'text-success' },
-        'in_call': { text: 'Görüşmede', class: 'text-info' },
-        'registration_failed': { text: 'Kayıt Hatası', class: 'text-danger' },
-        'start_failed': { text: 'Başlatma Hatası', class: 'text-danger' },
-        'init_failed': { text: 'Başlatma Hatası', class: 'text-danger' }
-    };
-    
-    const statusInfo = statusMap[status] || { text: 'Bilinmiyor', class: 'text-secondary' };
-    
-    // Update webphone header
-    const webphoneHeader = document.querySelector('.webphone-header div');
-    if (webphoneHeader) {
-        webphoneHeader.innerHTML = `<i class="fas fa-phone me-2"></i>WebPhone <small class="${statusInfo.class}">(${statusInfo.text})</small>`;
-    }
-}
-
-// Override existing makeWebphoneCall function
-function makeWebphoneCall() {
-    const number = document.getElementById('dialNumber').value;
-    if (number.trim() === '') {
-        showNotification('WebPhone: Lütfen telefon numarası giriniz', 'warning');
-        return;
-    }
-    
-    // Clean number (remove non-digits)
-    const cleanNumber = number.replace(/[^\d]/g, '');
-    if (cleanNumber.length < 3) {
-        showNotification('WebPhone: Geçersiz telefon numarası', 'warning');
-        return;
-    }
-    
-    makeWebRTCCall(cleanNumber);
-}
-
-// Override existing hangupWebphoneCall function  
-function hangupWebphoneCall() {
-    hangupWebRTCCall();
-}
-
-// Initialize WebPhone when document is ready
-document.addEventListener('DOMContentLoaded', function() {
-
-     
-    // Delay initialization to ensure everything is loaded
-    setTimeout(() => {
-        <?php if ($webphone == '1' || !empty($webphone_url)): ?>
-        initializeWebPhone();
-        <?php else: ?>
-        console.log('WebPhone disabled in system settings');
-        showNotification('WebPhone: Sistem ayarlarında devre dışı', 'info');
-        <?php endif; ?>
-    }, 3000);
-});
-
-// WebPhone reconnection on connection loss
-function reconnectWebPhone() {
-    if (userAgent && userAgent.state === SIP.UserAgentState.Stopped) {
-        console.log('Attempting WebPhone reconnection...');
-        showNotification('WebPhone: Yeniden bağlanılıyor...', 'info');
-        initializeWebPhone();
-    }
-}
-
-// Check WebPhone connection every 30 seconds
-setInterval(() => {
-    if (userAgent && userAgent.state === SIP.UserAgentState.Stopped && webphoneRegistered) {
-        webphoneRegistered = false;
-        updateWebPhoneStatus('registration_failed');
-        reconnectWebPhone();
-    }
-}, 30000);
-
-// Add dialpad color styling if configured
-<?php if (!empty($webphone_dialpad_color)): ?>
-document.addEventListener('DOMContentLoaded', function() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.log('WebRTC not supported');
-        document.querySelector('.btn-primary[onclick="toggleWebphone()"]').style.display = 'none';
-        return;
-    }
-    const style = document.createElement('style');
-    style.textContent = `
-        .dial-button {
-            background: <?php echo $webphone_dialpad_color; ?> !important;
-        }
-    `;
-    document.head.appendChild(style);
-});
-<?php endif; ?>
-</script>
-<?php endif; ?>
-    <!-- Additional CSS for enhanced animations -->
-    <style>
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        .btn-call:active, .btn-hangup:active {
-            animation: pulse 0.3s ease-in-out;
-        }
-        
-        .webphone-container {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .agent-status-badge {
-            transition: all 0.3s ease;
-            animation: pulse 2s infinite;
-        }
-        
-        .status-INCALL {
-            animation: pulse 1s infinite;
-        }
-        
-        .qc-result-badge {
-            transition: all 0.3s ease;
-        }
-        
-        .qc-result-badge:hover {
-            transform: scale(1.1);
-        }
         
         .table tbody tr {
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
         
         .table tbody tr:hover {
             background: rgba(37, 99, 235, 0.05) !important;
-            transform: translateX(5px);
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
-        
-        .modal-content {
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        }
-        
-        .modal-header {
-            border-radius: 15px 15px 0 0;
-        }
-        
-        .btn-lg {
-            padding: 0.75rem 1.5rem;
-            font-size: 1.1rem;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-lg:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        /* Responsive Design Enhancements */
-        @media (max-width: 768px) {
-            .stats-card {
-                margin-bottom: 1rem;
-            }
-            
-            .navbar-nav .nav-item .d-flex {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            
-            .table-responsive {
-                font-size: 0.9rem;
-            }
-            
-            .btn-sm {
-                font-size: 0.8rem;
-                padding: 0.3rem 0.6rem;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .container-fluid {
-                padding: 0.5rem;
-            }
-            
-            .card {
-                border-radius: 10px;
-            }
-            
-            .stats-card {
-                padding: 1rem;
-                text-align: center;
-            }
-            
-            .row .col-md-3 {
-                margin-bottom: 1rem;
-            }
-        }
-        
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --gradient-bg: linear-gradient(135deg, #1e293b 0%, #374151 100%);
-            }
-            
-            .card {
-                background: rgba(31, 41, 55, 0.95);
-                color: white;
-            }
-            
-            .table {
-                color: white;
-            }
-            
-            .table tbody tr:hover {
-                background: rgba(59, 130, 246, 0.1) !important;
-            }
-            
-            .form-control, .form-select {
-                background: rgba(55, 65, 81, 0.8);
-                border-color: rgba(75, 85, 99, 0.6);
-                color: white;
-            }
-            
-            .navbar {
-                background: rgba(31, 41, 55, 0.95);
-            }
-        }
-<?php if ($webphone_location == 'bar'): ?>
-.webphone-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: auto;
-    width: 100%;
-    height: 200px;
-    transform: translateY(200px);
-}
-
-.webphone-container.active {
-    transform: translateY(0);
-}
-<?php endif; ?>
-
-.webphone-status {
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 15px;
-    background: rgba(0,0,0,0.1);
-}
-    </style>
+    `;
+    document.head.appendChild(style);
+    </script>
 </body>
 </html>
