@@ -29,6 +29,7 @@ if (isset($_POST["VD_pass"]))       {$VD_pass=$_POST["VD_pass"];}
 if (isset($_POST["phone_login"]))   {$phone_login=$_POST["phone_login"];}
 if (isset($_POST["phone_pass"]))    {$phone_pass=$_POST["phone_pass"];}
 if (isset($_POST["webphone"]))      {$webphone=$_POST["webphone"];}
+echo "<!-- DEBUG: Login=$VD_login, Pass=".substr($VD_pass,0,3)."*** -->";
 
 // GET verilerini al
 if (isset($_GET["action"]))         {$action=$_GET["action"];}
@@ -49,6 +50,7 @@ $phone_number = preg_replace("/[^0-9]/", "", $phone_number);
 $qc_result = preg_replace("/[^A-Z]/", "", $qc_result);
 $campaign_filter = preg_replace("/[^-_0-9a-zA-Z]/", "", $campaign_filter);
 
+
 $NOW_TIME = date("Y-m-d H:i:s");
 $StarTtimE = date("U");
 $CIDdate = date("ymdHis");
@@ -62,25 +64,29 @@ if (strlen($VD_login) < 1 || strlen($VD_pass) < 1) {
 
 // Kullanıcı doğrulaması
 $auth = 0;
+
 $auth_message = user_authorization($VD_login,$VD_pass,'',1,0,1,0);
+
 if (preg_match("/^GOOD/",$auth_message)) {
     $auth=1;
+
 }
 
 if ($auth == 0) {
+  
     header("Location: ../index.php");
     exit;
 }
 
 // Kullanıcı bilgilerini al
-$stmt="SELECT full_name,user_level,user_group,allowed_campaigns from vicidial_users where user='$VD_login' and active='Y';";
+$stmt="SELECT full_name,user_level,user_group from vicidial_users where user='$VD_login' and active='Y';";
 $rslt=mysql_to_mysqli($stmt, $link);
 if (mysqli_num_rows($rslt) > 0) {
     $row=mysqli_fetch_row($rslt);
     $full_name = $row[0];
     $user_level = $row[1];
     $user_group = $row[2];
-    $allowed_campaigns = $row[3];
+
     
     // QC yetkisi kontrolü (Level 7+)
     if ($user_level < 7) {
@@ -91,7 +97,10 @@ if (mysqli_num_rows($rslt) > 0) {
     header("Location: ../index.php");
     exit;
 }
-
+$stmt="SELECT allowed_campaigns from vicidial_user_groups where user_group='$user_group' limit 1;";
+$rslt=mysql_to_mysqli($stmt, $link);
+ $row=mysqli_fetch_row($rslt);
+ $allowed_campaigns = $row[0];
 
 // WebPhone ayarlarını çek
 $webphone_url = '';
@@ -99,21 +108,23 @@ $webphone_dialpad_color = '';
 $webphone_location = 'right';
 $phone_server_ip = '';
 $webphone_auto_answer = 'N';
-
 // Sistem ayarlarından webphone bilgilerini al
-$stmt = "SELECT webphone_url,webphone_dialpad_color,webphone_location,phone_server_ip,webphone_auto_answer FROM system_settings LIMIT 1;";
+$stmt = "SELECT webphone_url FROM system_settings LIMIT 1;";
 $rslt = mysql_to_mysqli($stmt, $link);
 if (mysqli_num_rows($rslt) > 0) {
     $row = mysqli_fetch_row($rslt);
-    $webphone_url = $row[0];
-    $webphone_dialpad_color = $row[1]; 
-    $webphone_location = $row[2];
-    $phone_server_ip = $row[3];
-    $webphone_auto_answer = $row[4];
-}
+    $webphone_url = $row[0]; 
+  }
+
+$stmt = "SELECT web_socket_url FROM servers LIMIT 1;";
+$rslt = mysql_to_mysqli($stmt, $link);
+if (mysqli_num_rows($rslt) > 0) {
+    $row = mysqli_fetch_row($rslt);
+    $web_socket_url = $row[0]; 
+  }
 
 // Kullanıcının phone bilgilerini tekrar çek (webphone için)
-$stmt = "SELECT phone_login,phone_pass,phone_ip,phone_context,webphone_auto_answer,webphone_dialpad_color FROM vicidial_users WHERE user='$VD_login' AND active='Y';";
+$stmt = "SELECT login,pass,phone_ip,phone_context,webphone_auto_answer,server_ip FROM phones WHERE dialplan_number='$phone_login' AND active='Y';";
 $rslt = mysql_to_mysqli($stmt, $link);
 if (mysqli_num_rows($rslt) > 0) {
     $row = mysqli_fetch_row($rslt);
@@ -122,33 +133,27 @@ if (mysqli_num_rows($rslt) > 0) {
     $user_phone_ip = $row[2];
     $user_phone_context = $row[3];
     if ($row[4] != '') { $webphone_auto_answer = $row[4]; }
-    if ($row[5] != '') { $webphone_dialpad_color = $row[5]; }
-}
+    $phone_server_ip = $row[5];
+   
+  }
 
 // WebPhone server bilgilerini al
 $webphone_server = '';
 $webphone_protocol = 'SIP';
 $webphone_extension = $phone_login;
 
-$stmt = "SELECT server_ip,webphone_url,webphone_protocol FROM servers WHERE server_ip='$server_ip' OR active='Y' LIMIT 1;";
+$stmt = "SELECT server_ip,web_socket_url FROM servers WHERE server_ip='$server_ip' OR active='Y' LIMIT 1;";
 $rslt = mysql_to_mysqli($stmt, $link);
 if (mysqli_num_rows($rslt) > 0) {
     $row = mysqli_fetch_row($rslt);
     $webphone_server = $row[0];
-    if ($row[1] != '') { $webphone_url = $row[1]; }
-    if ($row[2] != '') { $webphone_protocol = $row[2]; }
+    if ($row[1] != '') {  $websocket_url= $row[1]; }
+   
 }
 
 // WebRTC/SIP ayarları
-$sip_domain = $webphone_server;
-if (empty($sip_domain)) {
-    $sip_domain = $server_ip;
-}
+$sip_domain =  $server_ip;
 
-$websocket_url = "wss://$sip_domain:8089/ws";
-if (!empty($webphone_url)) {
-    $websocket_url = $webphone_url;
-}
 
 
 
@@ -237,16 +242,15 @@ if ($action == 'hangup_call') {
 // QC Sonuç kaydetme
 if ($action == 'save_qc_result' && $qc_result && $lead_id) {
     // QC sonuç kodlarını tanımla
-    $qc_codes = array(
-        'OK' => 'Başarılı',
-        'RED' => 'Red',
-        'NOANS' => 'Ulaşılamadı', 
-        'BUSY' => 'Meşgul',
-        'HOLD' => 'Beklemeye Alındı',
-        'CALLBACK' => 'Geri Arama',
-        'FOLLOWUP' => 'Takip'
-    );
-    
+ $qc_codes = array(
+    'OK' => 'Başarılı',
+    'RED' => 'Red',
+    'NOANS' => 'Ulaşılamadı',
+    'BUSY' => 'Meşgul',
+    'HOLD' => 'Beklemeye Alındı',
+    'CALLBACK' => 'Geri Arama',
+    'FOLLOWUP' => 'Takip'
+);    
     if (array_key_exists($qc_result, $qc_codes)) {
         // A_ozel_tablo'da QC sonucunu güncelle
         $qc_description = $qc_codes[$qc_result];
@@ -339,7 +343,7 @@ if ($action == 'logout') {
 }
 
 // Filtre oluşturma
-$search_filter = "WHERE 1=1 ";
+$search_filter = "WHERE lead_id>0 ";
 if (isset($_GET['search']) && strlen($_GET['search']) > 0) {
     $search = mysqli_real_escape_string($link, $_GET['search']);
     $search_filter .= "AND (first_name LIKE '%$search%' OR last_name LIKE '%$search%' OR phone_number LIKE '%$search%' OR user LIKE '%$search%') ";
@@ -386,6 +390,7 @@ $total_pages = ceil($total_records / $records_per_page);
 $stmt = "SELECT * FROM A_ozel_tablo $search_filter $campaign_sql ORDER BY entry_date DESC LIMIT $offset, $records_per_page";
 $rslt = mysql_to_mysqli($stmt, $link);
 
+
 // Kampanya listesi çek
 $campaign_list_stmt = "SELECT DISTINCT campaign_id FROM A_ozel_tablo $campaign_sql ORDER BY campaign_id";
 $campaign_list_rslt = mysql_to_mysqli($campaign_list_stmt, $link);
@@ -400,7 +405,7 @@ header ("Content-type: text/html; charset=utf-8");
     <title>VICIdial QC Panel - Enhanced</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sip.js/0.21.2/sip.min.js"></script>
+<script src="https://unpkg.com/jssip@3.10.1/dist/jssip.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
@@ -1341,12 +1346,18 @@ header ("Content-type: text/html; charset=utf-8");
     }, 120000);
 
     // Enhanced error handling
-    window.addEventListener('error', function(e) {
-        console.error('Global error:', e.error);
-        showNotification('Bir hata oluştu. Sayfa yenilenecek.', 'error');
-        setTimeout(() => location.reload(), 3000);
-    });
-
+  window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+    
+    // Sadece kritik hataları yakala
+    if (e.error && e.error.name === 'TypeError' && e.error.message.includes('SIP')) {
+        showNotification('WebPhone hatası: SIP kütüphanesi yüklenemedi', 'warning');
+        return;
+    }
+    
+    // Diğer hataları görmezden gel veya sadece console'da logla
+    console.warn('JavaScript error logged, but not critical:', e.error);
+});
     // Connection monitoring
     let connectionCheckInterval;
     function startConnectionMonitoring() {
@@ -1461,163 +1472,109 @@ let webphoneRegistered = false;
 let userAgent = null;
 
 // MySQL'den alınan WebPhone ayarları
+// SIP.js yerine JsSIP kullan
 const webphoneConfig = {
     extension: '<?php echo $webphone_extension; ?>',
     password: '<?php echo $phone_pass; ?>',
     server: '<?php echo $sip_domain; ?>',
-    websocketUrl: '<?php echo $websocket_url; ?>',
-    autoAnswer: '<?php echo $webphone_auto_answer; ?>' === 'Y',
-    dialpadColor: '<?php echo $webphone_dialpad_color; ?>',
-    protocol: '<?php echo $webphone_protocol; ?>'
+    websocketUrl: 'wss://<?php echo $sip_domain; ?>:8089/ws'
 };
 
+let ua = null;
+let session = null;
+
+  
+
+
+
 function initializeWebPhone() {
-    console.log('Initializing WebPhone with config:', webphoneConfig);
-    
-    if (!webphoneConfig.extension || !webphoneConfig.password) {
-        showNotification('WebPhone: Extension bilgileri eksik', 'error');
+ console.log('WebPhone temporarily disabled for testing');
+    showNotification('WebPhone: Test için devre dışı', 'info');
+    return;
+     if (typeof SIP === 'undefined') {
+        console.log('SIP.js not available, skipping WebPhone initialization');
+        showNotification('WebPhone: SIP kütüphanesi yüklenemedi', 'warning');
         return;
     }
+    console.log('Initializing WebPhone with JsSIP...');
+    
+    const socket = new JsSIP.WebSocketInterface(webphoneConfig.websocketUrl);
+    const configuration = {
+        sockets: [socket],
+        uri: `sip:${webphoneConfig.extension}@${webphoneConfig.server}`,
+        password: webphoneConfig.password,
+        display_name: '<?php echo $full_name; ?>'
+    };
 
-    try {
-        // SIP.js UserAgent oluştur
-        const uri = `sip:${webphoneConfig.extension}@${webphoneConfig.server}`;
-        
-        const userAgentOptions = {
-            uri: SIP.UserAgent.makeURI(uri),
-            transportOptions: {
-                server: webphoneConfig.websocketUrl,
-                keepAliveInterval: 30,
-                connectionTimeout: 10
-            },
-            authorizationUsername: webphoneConfig.extension,
-            authorizationPassword: webphoneConfig.password,
-            displayName: '<?php echo $full_name; ?>',
-            sessionDescriptionHandlerFactoryOptions: {
-                constraints: {
-                    audio: true,
-                    video: false
-                }
-            },
-            delegate: {
-                onConnect: () => {
-                    console.log('WebPhone connected to server');
-                    showNotification('WebPhone: Sunucuya bağlandı', 'success');
-                },
-                onDisconnect: (error) => {
-                    console.log('WebPhone disconnected:', error);
-                    webphoneRegistered = false;
-                    showNotification('WebPhone: Bağlantı kesildi', 'warning');
-                },
-                onInvite: (invitation) => {
-                    console.log('Incoming call from:', invitation.remoteIdentity.uri.user);
-                    handleIncomingCall(invitation);
-                }
-            }
-        };
+    ua = new JsSIP.UA(configuration);
 
-        userAgent = new SIP.UserAgent(userAgentOptions);
-        
-        // Start the user agent
-        userAgent.start().then(() => {
-            console.log('WebPhone UserAgent started');
-            
-            // Register
-            const registerer = new SIP.Registerer(userAgent);
-            registerer.register().then(() => {
-                webphoneRegistered = true;
-                showNotification(`WebPhone: ${webphoneConfig.extension} kayıtlı`, 'success');
-                updateWebPhoneStatus('registered');
-            }).catch((error) => {
-                console.error('WebPhone registration failed:', error);
-                showNotification('WebPhone: Kayıt başarısız - ' + error.message, 'error');
-                updateWebPhoneStatus('registration_failed');
-            });
-            
-        }).catch((error) => {
-            console.error('WebPhone UserAgent start failed:', error);
-            showNotification('WebPhone: Başlatma hatası - ' + error.message, 'error');
-            updateWebPhoneStatus('start_failed');
-        });
+    ua.on('connecting', function(e) {
+        console.log('WebPhone connecting...');
+        showNotification('WebPhone: Bağlanıyor...', 'info');
+    });
 
-    } catch (error) {
-        console.error('WebPhone initialization error:', error);
-        showNotification('WebPhone: Başlatma hatası - ' + error.message, 'error');
-        updateWebPhoneStatus('init_failed');
-    }
+    ua.on('connected', function(e) {
+        console.log('WebPhone connected');
+        showNotification('WebPhone: Bağlandı', 'success');
+    });
+
+    ua.on('registered', function(e) {
+        webphoneRegistered = true;
+        showNotification('WebPhone: Kayıtlı', 'success');
+        updateWebPhoneStatus('registered');
+    });
+
+    ua.on('registrationFailed', function(e) {
+        console.error('Registration failed:', e);
+        showNotification('WebPhone: Kayıt başarısız', 'error');
+    });
+
+    ua.on('newRTCSession', function(e) {
+        session = e.session;
+        if (session.direction === 'incoming') {
+            handleIncomingCall(session);
+        }
+    });
+
+    ua.start();
 }
 
 function makeWebRTCCall(number) {
-    if (!webphoneRegistered || !userAgent) {
+    if (!ua || !ua.isRegistered()) {
         showNotification('WebPhone: Kayıtlı değil', 'error');
         return;
     }
+
+    const target = `sip:${number}@${webphoneConfig.server}`;
+    const options = {
+        mediaConstraints: { audio: true, video: false }
+    };
+
+    session = ua.call(target, options);
     
-    try {
-        const target = SIP.UserAgent.makeURI(`sip:${number}@${webphoneConfig.server}`);
-        if (!target) {
-            showNotification('WebPhone: Geçersiz numara', 'error');
-            return;
-        }
-
-        // Create inviter
-        const inviter = new SIP.Inviter(userAgent, target, {
-            sessionDescriptionHandlerOptions: {
-                constraints: {
-                    audio: true,
-                    video: false
-                }
-            }
-        });
-
-        // Setup session state change handler
-        inviter.stateChange.addListener((newState) => {
-            console.log('Call state changed to:', newState);
-            switch (newState) {
-                case SIP.SessionState.Establishing:
-                    showNotification(`WebPhone: ${number} aranıyor...`, 'info');
-                    break;
-                case SIP.SessionState.Established:
-                    webphoneSession = inviter;
-                    showNotification(`WebPhone: ${number} ile görüşme başladı`, 'success');
-                    updateWebPhoneStatus('in_call');
-                    break;
-                case SIP.SessionState.Terminated:
-                    webphoneSession = null;
-                    showNotification('WebPhone: Görüşme sonlandı', 'info');
-                    updateWebPhoneStatus('registered');
-                    break;
-            }
-        });
-
-        // Send the INVITE
-        inviter.invite().catch((error) => {
-            console.error('Call failed:', error);
-            showNotification('WebPhone: Arama başarısız - ' + error.message, 'error');
-        });
-
-    } catch (error) {
-        console.error('WebRTC call error:', error);
-        showNotification('WebPhone: Arama hatası - ' + error.message, 'error');
-    }
+    session.on('progress', function() {
+        showNotification(`Aranıyor: ${number}`, 'info');
+    });
+    
+    session.on('confirmed', function() {
+        showNotification(`Görüşme başladı: ${number}`, 'success');
+        updateWebPhoneStatus('in_call');
+    });
+    
+    session.on('ended', function() {
+        showNotification('Görüşme sonlandı', 'info');
+        updateWebPhoneStatus('registered');
+        session = null;
+    });
 }
 
 function hangupWebRTCCall() {
-    if (webphoneSession) {
-        try {
-            webphoneSession.bye();
-            webphoneSession = null;
-            showNotification('WebPhone: Görüşme sonlandırıldı', 'info');
-            updateWebPhoneStatus('registered');
-        } catch (error) {
-            console.error('Hangup error:', error);
-            showNotification('WebPhone: Sonlandırma hatası', 'error');
-        }
-    } else {
-        showNotification('WebPhone: Aktif görüşme bulunamadı', 'warning');
+    if (session) {
+        session.terminate();
+        session = null;
+        showNotification('Görüşme sonlandırıldı', 'info');
     }
 }
-
 function handleIncomingCall(invitation) {
     const callerNumber = invitation.remoteIdentity.uri.user;
     
@@ -1686,6 +1643,8 @@ function hangupWebphoneCall() {
 
 // Initialize WebPhone when document is ready
 document.addEventListener('DOMContentLoaded', function() {
+
+     
     // Delay initialization to ensure everything is loaded
     setTimeout(() => {
         <?php if ($webphone == '1' || !empty($webphone_url)): ?>
@@ -1718,6 +1677,11 @@ setInterval(() => {
 // Add dialpad color styling if configured
 <?php if (!empty($webphone_dialpad_color)): ?>
 document.addEventListener('DOMContentLoaded', function() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.log('WebRTC not supported');
+        document.querySelector('.btn-primary[onclick="toggleWebphone()"]').style.display = 'none';
+        return;
+    }
     const style = document.createElement('style');
     style.textContent = `
         .dial-button {
@@ -1726,6 +1690,8 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
 });
+<?php endif; ?>
+</script>
 <?php endif; ?>
     <!-- Additional CSS for enhanced animations -->
     <style>
